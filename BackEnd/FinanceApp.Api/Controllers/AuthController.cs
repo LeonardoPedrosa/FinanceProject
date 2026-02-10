@@ -1,7 +1,7 @@
 // Controllers/AuthController.cs
 using Microsoft.AspNetCore.Mvc;
 using FinanceApp.Api.DTOs;
-using FinanceApp.Api.Services;
+using FinanceApp.Api.Services.Interfaces;
 
 namespace FinanceApp.Api.Controllers;
 

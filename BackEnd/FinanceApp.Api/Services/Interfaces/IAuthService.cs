@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FinanceApp.Api.DTOs;
 
 namespace FinanceApp.Api.Services.Interfaces
 {

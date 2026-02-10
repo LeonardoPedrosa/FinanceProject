@@ -5,7 +5,8 @@ using System.Security.Claims;
 using System.Text;
 using FinanceApp.Api.DTOs;
 using FinanceApp.Api.Models;
-using FinanceApp.Api.Repositories;
+using FinanceApp.Api.Services.Interfaces;
+using FinanceApp.Api.Data.Interfaces;
 
 namespace FinanceApp.Api.Services;
 
