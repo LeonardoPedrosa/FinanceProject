@@ -52,7 +52,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Register services
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 //builder.Services.AddScoped<IExpenseService, ExpenseService>();
-//builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Register Generic Repository
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
