@@ -12,9 +12,9 @@ namespace FinanceApp.Api.DTOs
         public string Icon { get; set; } = string.Empty;
         public string Color { get; set; } = string.Empty;
         public decimal MaxValue { get; set; }
+        public bool HasMonthConfig { get; set; }
         public decimal CurrentValue { get; set; }
         public bool IsOverLimit { get; set; }
         public bool IsOwner { get; set; }
-
     }
 }

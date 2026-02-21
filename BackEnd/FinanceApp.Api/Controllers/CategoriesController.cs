@@ -27,9 +27,12 @@ namespace FinanceApp.Api.Controllers
         private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         [HttpGet]
-        public async Task<ActionResult<List<CategoryResponseDto>>> GetCategories()
+        public async Task<ActionResult<List<CategoryResponseDto>>> GetCategories([FromQuery] int? year, [FromQuery] int? month)
         {
-            var categories = await _categoryService.GetUserCategoriesAsync(GetUserId());
+            var now = DateTime.UtcNow;
+            var y = year ?? now.Year;
+            var m = month ?? now.Month;
+            var categories = await _categoryService.GetUserCategoriesAsync(GetUserId(), y, m);
             return Ok(categories);
         }
 
@@ -55,10 +58,76 @@ namespace FinanceApp.Api.Controllers
         }
 
         [HttpGet("{categoryId}/status")]
-        public async Task<ActionResult<CategoryStatusDto>> GetCategoryStatus(Guid categoryId)
+        public async Task<ActionResult<CategoryStatusDto>> GetCategoryStatus(Guid categoryId, [FromQuery] int? year, [FromQuery] int? month)
         {
-            var status = await _categoryService.GetCategoryStatusAsync(categoryId);
+            var now = DateTime.UtcNow;
+            var status = await _categoryService.GetCategoryStatusAsync(categoryId, year ?? now.Year, month ?? now.Month);
             return Ok(status);
+        }
+
+        [HttpPut("{categoryId}/month-config")]
+        public async Task<ActionResult<MonthConfigResponseDto>> UpsertMonthConfig(Guid categoryId, UpsertMonthConfigDto dto)
+        {
+            var config = await _categoryService.UpsertMonthConfigAsync(GetUserId(), categoryId, dto);
+            return Ok(config);
+        }
+
+        [HttpGet("{categoryId}/month-config/{year}/{month}")]
+        public async Task<ActionResult<MonthConfigResponseDto>> GetMonthConfig(Guid categoryId, int year, int month)
+        {
+            var config = await _categoryService.GetMonthConfigAsync(GetUserId(), categoryId, year, month);
+            return Ok(config);
+        }
+
+        [HttpGet("{categoryId}/expenses")]
+        public async Task<ActionResult<List<ExpenseResponseDto>>> GetExpenses(Guid categoryId, [FromQuery] int? year, [FromQuery] int? month)
+        {
+            var now = DateTime.UtcNow;
+            try
+            {
+                var expenses = await _categoryService.GetCategoryExpensesAsync(GetUserId(), categoryId, year ?? now.Year, month ?? now.Month);
+                return Ok(expenses);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPut("{categoryId}/expenses/{expenseId}")]
+        public async Task<ActionResult<ExpenseResponseDto>> UpdateExpense(Guid categoryId, Guid expenseId, UpdateExpenseDto dto)
+        {
+            try
+            {
+                var expense = await _categoryService.UpdateExpenseAsync(GetUserId(), categoryId, expenseId, dto);
+                return Ok(expense);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex) when (ex.Message == "Expense not found")
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{categoryId}/expenses/{expenseId}")]
+        public async Task<ActionResult> DeleteExpense(Guid categoryId, Guid expenseId)
+        {
+            try
+            {
+                await _categoryService.DeleteExpenseAsync(GetUserId(), categoryId, expenseId);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex) when (ex.Message == "Expense not found")
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
     }
 }

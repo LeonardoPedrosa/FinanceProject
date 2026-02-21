@@ -100,6 +100,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<ICategoryShareRepository, CategoryShareRepository>();
+builder.Services.AddScoped<ICategoryMonthConfigRepository, CategoryMonthConfigRepository>();
 
 var app = builder.Build();
 

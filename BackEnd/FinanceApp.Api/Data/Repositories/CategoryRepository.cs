@@ -10,21 +10,30 @@ namespace FinanceApp.Api.Data.Repositories
         {
         }
 
-        public async Task<IEnumerable<Category>> GetUserCategoriesAsync(Guid userId)
+        public async Task<IEnumerable<Category>> GetUserCategoriesAsync(Guid userId, int year, int month)
         {
+            var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+
             return await _dbSet
                 .Where(c => c.OwnerId == userId)
-                .Include(c => c.Expenses)
+                .Include(c => c.Expenses.Where(e => e.CreatedAt >= startDate && e.CreatedAt < endDate))
+                .Include(c => c.MonthConfigs.Where(mc => mc.Year == year && mc.Month == month))
                 .OrderBy(c => c.Name)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Category>> GetSharedCategoriesAsync(Guid userId)
+        public async Task<IEnumerable<Category>> GetSharedCategoriesAsync(Guid userId, int year, int month)
         {
+            var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+
             return await _context.CategoryShares
                 .Where(cs => cs.SharedWithUserId == userId)
                 .Include(cs => cs.Category)
-                .ThenInclude(c => c.Expenses)
+                    .ThenInclude(c => c.Expenses.Where(e => e.CreatedAt >= startDate && e.CreatedAt < endDate))
+                .Include(cs => cs.Category)
+                    .ThenInclude(c => c.MonthConfigs.Where(mc => mc.Year == year && mc.Month == month))
                 .Select(cs => cs.Category)
                 .OrderBy(c => c.Name)
                 .ToListAsync();

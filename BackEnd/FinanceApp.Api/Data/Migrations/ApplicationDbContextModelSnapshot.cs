@@ -39,9 +39,6 @@ namespace FinanceApp.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("MaxValue")
-                        .HasColumnType("numeric");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -54,6 +51,38 @@ namespace FinanceApp.Api.Data.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("FinanceApp.Api.Models.CategoryMonthConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("MaxValue")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId", "Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("CategoryMonthConfigs");
                 });
 
             modelBuilder.Entity("FinanceApp.Api.Models.CategoryShare", b =>
@@ -151,6 +180,17 @@ namespace FinanceApp.Api.Data.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("FinanceApp.Api.Models.CategoryMonthConfig", b =>
+                {
+                    b.HasOne("FinanceApp.Api.Models.Category", "Category")
+                        .WithMany("MonthConfigs")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("FinanceApp.Api.Models.CategoryShare", b =>
                 {
                     b.HasOne("FinanceApp.Api.Models.Category", "Category")
@@ -192,6 +232,8 @@ namespace FinanceApp.Api.Data.Migrations
             modelBuilder.Entity("FinanceApp.Api.Models.Category", b =>
                 {
                     b.Navigation("Expenses");
+
+                    b.Navigation("MonthConfigs");
 
                     b.Navigation("Shares");
                 });
