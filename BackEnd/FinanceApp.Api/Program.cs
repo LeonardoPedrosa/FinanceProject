@@ -8,8 +8,8 @@ using FinanceApp.Api.Services.Intefaces;
 using FinanceApp.Api.Data.Interfaces;
 using FinanceApp.Api.Data.Repositories;
 using FinanceApp.Api.Services.Interfaces;
-using FinanceApp.Api.Services;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +26,6 @@ builder.Services.AddSwaggerGen(options =>
         Description = "API for managing personal finances with shared categories"
     });
 
-    // Add JWT Authentication to Swagger
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -34,7 +33,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter your JWT token in the text input below.\n\nExample: \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
+        Description = "Enter your JWT token"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -53,25 +52,62 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Database configuration
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// ================= DATABASE CONFIGURATION =================
+// Railway-compatible connection
+
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+string connectionString;
+
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    // Running on Railway
+    var databaseUri = new Uri(databaseUrl);
+    var userInfo = databaseUri.UserInfo.Split(':');
+
+    connectionString =
+        $"Host={databaseUri.Host};" +
+        $"Port={databaseUri.Port};" +
+        $"Database={databaseUri.AbsolutePath.TrimStart('/')};" +
+        $"Username={userInfo[0]};" +
+        $"Password={userInfo[1]};" +
+        $"SSL Mode=Require;Trust Server Certificate=true";
+}
+else
+{
+    // Running locally
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string not found.");
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// CORS configuration
+
+// ================= CORS =================
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://frontend:80")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://frontend:80"
+                // Add your Railway frontend URL later
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
-// JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
+
+// ================= JWT =================
+
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("JWT Key not configured");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -83,35 +119,40 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
-// Register services
+
+// ================= DEPENDENCY INJECTION =================
+
 builder.Services.AddScoped<ICategoryService, CategoryService>();
-//builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Register Generic Repository
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-// Register Specific Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<ICategoryShareRepository, CategoryShareRepository>();
 builder.Services.AddScoped<ICategoryMonthConfigRepository, CategoryMonthConfigRepository>();
 
+
 var app = builder.Build();
+
+
+// ================= MIGRATIONS WITH RETRY =================
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
 
-        // Wait for database to be ready
         var retryCount = 0;
         var maxRetries = 10;
 
@@ -120,53 +161,50 @@ using (var scope = app.Services.CreateScope())
             try
             {
                 context.Database.Migrate();
-                Console.WriteLine("Database migration completed successfully!");
+                logger.LogInformation("Database migration completed successfully!");
                 break;
             }
             catch (Exception ex)
             {
                 retryCount++;
-                Console.WriteLine($"Migration attempt {retryCount} failed: {ex.Message}");
+                logger.LogWarning(
+                    $"Migration attempt {retryCount} failed: {ex.Message}");
 
                 if (retryCount >= maxRetries)
                 {
-                    Console.WriteLine("Could not connect to database after maximum retries.");
+                    logger.LogError("Could not connect to database.");
                     throw;
                 }
 
-                Thread.Sleep(2000); // Wait 2 seconds before retry
+                Thread.Sleep(3000);
             }
         }
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating the database.");
+        logger.LogError(ex, "Error while migrating database.");
         throw;
     }
 }
 
-// Configure the HTTP request pipeline
+
+// ================= HTTP PIPELINE =================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Finance App API v1");
-        c.RoutePrefix = string.Empty; // Swagger na raiz (opcional)
+        c.RoutePrefix = string.Empty;
     });
 }
 
 app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
 
-// Apply migrations on startup
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-}
+app.MapControllers();
 
 app.Run();
