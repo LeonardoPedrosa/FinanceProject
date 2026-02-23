@@ -62,21 +62,32 @@ string connectionString;
 
 if (!string.IsNullOrEmpty(databaseUrl))
 {
-    // Running on Railway
-    var databaseUri = new Uri(databaseUrl);
-    var userInfo = databaseUri.UserInfo.Split(':');
+    // Railway DATABASE_URL format
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
 
     connectionString =
-        $"Host={databaseUri.Host};" +
-        $"Port={databaseUri.Port};" +
-        $"Database={databaseUri.AbsolutePath.TrimStart('/')};" +
+        $"Host={uri.Host};" +
+        $"Port={uri.Port};" +
+        $"Database={uri.AbsolutePath.TrimStart('/')};" +
         $"Username={userInfo[0]};" +
         $"Password={userInfo[1]};" +
         $"SSL Mode=Require;Trust Server Certificate=true";
 }
+else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PGHOST")))
+{
+    // Railway individual variables fallback
+    connectionString =
+        $"Host={Environment.GetEnvironmentVariable("PGHOST")};" +
+        $"Port={Environment.GetEnvironmentVariable("PGPORT")};" +
+        $"Database={Environment.GetEnvironmentVariable("PGDATABASE")};" +
+        $"Username={Environment.GetEnvironmentVariable("PGUSER")};" +
+        $"Password={Environment.GetEnvironmentVariable("PGPASSWORD")};" +
+        $"SSL Mode=Require;Trust Server Certificate=true";
+}
 else
 {
-    // Running locally
+    // Local development
     connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string not found.");
 }
@@ -94,7 +105,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "http://localhost:3000",
                 "http://frontend:80"
-                // Add your Railway frontend URL later
+            // Add your Railway frontend URL later
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
