@@ -98,15 +98,21 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // ================= CORS =================
 
+var allowedOrigins = new List<string>
+{
+    "http://localhost:3000",
+    "http://frontend:80",
+    "https://financeproject-frontend-production.up.railway.app"
+};
+var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
+if (!string.IsNullOrEmpty(frontendUrl))
+    allowedOrigins.Add(frontendUrl);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",
-                "http://frontend:80"
-            // Add your Railway frontend URL later
-            )
+        policy.WithOrigins(allowedOrigins.ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
