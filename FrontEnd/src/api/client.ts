@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'https://financeproject-backend-production.up.railway.app/api',
+  baseURL: 'https://financeproject.railway.internal/api',
 })
 
 api.interceptors.request.use((config) => {
