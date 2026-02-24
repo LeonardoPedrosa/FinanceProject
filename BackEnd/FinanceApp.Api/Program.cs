@@ -102,7 +102,7 @@ var allowedOrigins = new List<string>
 {
     "http://localhost:3000",
     "http://frontend:80",
-    "https://financeproject-frontend-production.up.railway.app"
+    "https://financeproject-production-1d27.up.railway.app"
 };
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
 if (!string.IsNullOrEmpty(frontendUrl))
