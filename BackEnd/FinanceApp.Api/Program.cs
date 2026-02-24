@@ -4,29 +4,30 @@ using FinanceApp.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using FinanceApp.Api.Services.Intefaces;
+using FinanceApp.Api.Services.Interfaces;
 using FinanceApp.Api.Data.Interfaces;
 using FinanceApp.Api.Data.Repositories;
-using FinanceApp.Api.Services.Interfaces;
 using Microsoft.OpenApi.Models;
-using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+//
+// 🔥 CRÍTICO PARA RAILWAY — escutar fora do localhost
+//
+builder.WebHost.UseUrls("http://0.0.0.0:8080");
 
-// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+//
+// 🧾 SWAGGER
+//
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Finance App API",
-        Version = "v1",
-        Description = "API for managing personal finances with shared categories"
+        Version = "v1"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -35,8 +36,7 @@ builder.Services.AddSwaggerGen(options =>
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
         BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter your JWT token"
+        In = ParameterLocation.Header
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -55,17 +55,16 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-
-// ================= DATABASE CONFIGURATION =================
-// Railway-compatible connection
+//
+// 🐘 DATABASE — Railway PostgreSQL
+//
+string connectionString;
 
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
-string connectionString;
-
 if (!string.IsNullOrEmpty(databaseUrl))
 {
-    // Railway DATABASE_URL format
+    // Format: postgres://user:pass@host:port/db
     var uri = new Uri(databaseUrl);
     var userInfo = uri.UserInfo.Split(':');
 
@@ -77,54 +76,33 @@ if (!string.IsNullOrEmpty(databaseUrl))
         $"Password={userInfo[1]};" +
         $"SSL Mode=Require;Trust Server Certificate=true";
 }
-else if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PGHOST")))
-{
-    // Railway individual variables fallback
-    connectionString =
-        $"Host={Environment.GetEnvironmentVariable("PGHOST")};" +
-        $"Port={Environment.GetEnvironmentVariable("PGPORT")};" +
-        $"Database={Environment.GetEnvironmentVariable("PGDATABASE")};" +
-        $"Username={Environment.GetEnvironmentVariable("PGUSER")};" +
-        $"Password={Environment.GetEnvironmentVariable("PGPASSWORD")};" +
-        $"SSL Mode=Require;Trust Server Certificate=true";
-}
 else
 {
-    // Local development
-    connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? throw new InvalidOperationException("Connection string not found.");
+    throw new Exception("DATABASE_URL not found");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-
-// ================= CORS =================
-
-var allowedOrigins = new List<string>
-{
-    "http://localhost:3000",
-    "http://frontend:80",
-    "https://financeproject-frontend-production.up.railway.app"
-};
-var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
-if (!string.IsNullOrEmpty(frontendUrl))
-    allowedOrigins.Add(frontendUrl);
-
+//
+// 🌐 CORS — permitir frontend Railway
+//
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
-
-// ================= JWT =================
-
+//
+// 🔐 JWT
+//
 var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? Environment.GetEnvironmentVariable("JWT_KEY")
     ?? throw new InvalidOperationException("JWT Key not configured");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -132,99 +110,78 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey =
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
-
-// ================= DEPENDENCY INJECTION =================
-
+//
+// 🧩 DEPENDENCY INJECTION
+//
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<ICategoryShareRepository, CategoryShareRepository>();
 builder.Services.AddScoped<ICategoryMonthConfigRepository, CategoryMonthConfigRepository>();
 
-
 var app = builder.Build();
 
+//
+// 🧪 HEALTH CHECK (importantíssimo)
+//
+app.MapGet("/", () => "Finance API running 🚀");
 
-// ================= MIGRATIONS WITH RETRY =================
+//
+// 🧾 SWAGGER EM PRODUÇÃO
+//
+app.UseSwagger();
+app.UseSwaggerUI();
 
+//
+// 🌐 PIPELINE
+//
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+//
+// 🧠 MIGRATIONS COM RETRY
+//
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var retryCount = 0;
-        var maxRetries = 10;
-
-        while (retryCount < maxRetries)
+        for (int i = 1; i <= 10; i++)
         {
             try
             {
                 context.Database.Migrate();
-                logger.LogInformation("Database migration completed successfully!");
+                logger.LogInformation("Database migrated successfully");
                 break;
             }
             catch (Exception ex)
             {
-                retryCount++;
-                logger.LogWarning(
-                    $"Migration attempt {retryCount} failed: {ex.Message}");
-
-                if (retryCount >= maxRetries)
-                {
-                    logger.LogError("Could not connect to database.");
-                    throw;
-                }
-
+                logger.LogWarning($"Migration attempt {i} failed: {ex.Message}");
                 Thread.Sleep(3000);
             }
         }
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Error while migrating database.");
-        throw;
+        Console.WriteLine("Migration failed: " + ex.Message);
     }
 }
-
-
-// ================= HTTP PIPELINE =================
-
-
-app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Finance App API v1");
-    c.RoutePrefix = string.Empty;
-});
-
-
-app.UseRouting();
-
-app.UseCors("AllowFrontend");
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
 
 app.Run();
