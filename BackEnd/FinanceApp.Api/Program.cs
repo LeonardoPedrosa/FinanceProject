@@ -4,10 +4,12 @@ using FinanceApp.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using FinanceApp.Api.Services.Interfaces;
+using FinanceApp.Api.Services.Intefaces;
 using FinanceApp.Api.Data.Interfaces;
 using FinanceApp.Api.Data.Repositories;
+using FinanceApp.Api.Services.Interfaces;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
