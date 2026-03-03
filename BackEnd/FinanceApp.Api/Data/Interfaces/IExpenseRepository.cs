@@ -9,5 +9,6 @@ namespace FinanceApp.Api.Data.Interfaces
         Task<IEnumerable<Expense>> GetByDateRangeAsync(Guid categoryId, DateTime startDate, DateTime endDate);
         Task<Expense?> GetExpenseWithDetailsAsync(Guid expenseId);
         Task<decimal> GetTotalByCategoryAsync(Guid categoryId);
+        Task<decimal> GetTotalByUserMonthAsync(Guid userId, int year, int month);
     }
 }

@@ -57,5 +57,14 @@ namespace FinanceApp.Api.Data.Repositories
                 .Where(e => e.CategoryId == categoryId)
                 .SumAsync(e => e.Amount);
         }
+
+        public async Task<decimal> GetTotalByUserMonthAsync(Guid userId, int year, int month)
+        {
+            var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            return await _dbSet
+                .Where(e => e.UserId == userId && e.CreatedAt >= startDate && e.CreatedAt < endDate)
+                .SumAsync(e => e.Amount);
+        }
     }
 }

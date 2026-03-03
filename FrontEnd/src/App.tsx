@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
+import SavingsGoalsPage from './pages/SavingsGoalsPage'
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -23,6 +24,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/savings-goals"
+            element={
+              <ProtectedRoute>
+                <SavingsGoalsPage />
               </ProtectedRoute>
             }
           />

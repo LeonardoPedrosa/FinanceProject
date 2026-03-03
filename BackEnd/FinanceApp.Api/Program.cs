@@ -132,6 +132,8 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<ICategoryShareRepository, CategoryShareRepository>();
 builder.Services.AddScoped<ICategoryMonthConfigRepository, CategoryMonthConfigRepository>();
+builder.Services.AddScoped<ISavingsGoalRepository, SavingsGoalRepository>();
+builder.Services.AddScoped<ISavingsGoalService, SavingsGoalService>();
 
 var app = builder.Build();
 

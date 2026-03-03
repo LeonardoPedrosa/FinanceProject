@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Plus, LogOut, TrendingUp, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 import { Category } from '../types'
@@ -17,6 +18,7 @@ const MONTH_NAMES = [
 
 const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
@@ -82,6 +84,12 @@ const DashboardPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             {refreshing && <RefreshCw size={16} className="text-indigo-400 animate-spin" />}
+            <button
+              onClick={() => navigate('/savings-goals')}
+              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors hidden sm:block"
+            >
+              Savings Goals
+            </button>
             <span className="text-sm text-gray-600 hidden sm:block">
               Hello, <strong>{user?.name}</strong>
             </span>

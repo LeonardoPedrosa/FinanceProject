@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Expense> Expenses { get; set; }
     public DbSet<CategoryShare> CategoryShares { get; set; }
     public DbSet<CategoryMonthConfig> CategoryMonthConfigs { get; set; }
+    public DbSet<SavingsGoal> SavingsGoals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,5 +43,14 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<CategoryMonthConfig>()
             .HasIndex(mc => new { mc.CategoryId, mc.Year, mc.Month })
             .IsUnique();
+
+        modelBuilder.Entity<SavingsGoal>()
+            .HasOne(g => g.User)
+            .WithMany()
+            .HasForeignKey(g => g.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SavingsGoal>()
+            .HasIndex(g => g.UserId);
     }
 }

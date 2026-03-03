@@ -32,3 +32,30 @@ export interface Expense {
   createdAt: string
   categoryName: string
 }
+
+export interface SavingsGoalMonthSummary {
+  year: number
+  month: number
+  monthlyBudget: number
+  totalExpenses: number
+  amountSaved: number
+  badge: string
+  badgeLabel: string
+}
+
+export interface SavingsGoal {
+  id: string
+  userId: string
+  name: string
+  description: string | null
+  totalTargetAmount: number
+  monthlyBudget: number
+  startYear: number
+  startMonth: number
+  durationMonths: number
+  status: string
+  totalSaved: number
+  progressPercent: number
+  monthSummaries: SavingsGoalMonthSummary[]
+  createdAt: string
+}
