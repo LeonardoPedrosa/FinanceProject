@@ -33,6 +33,14 @@ export interface Expense {
   categoryName: string
 }
 
+export interface UserMonthBudget {
+  id: string
+  year: number
+  month: number
+  totalBudget: number
+  isSet: boolean
+}
+
 export interface SavingsGoalMonthSummary {
   year: number
   month: number

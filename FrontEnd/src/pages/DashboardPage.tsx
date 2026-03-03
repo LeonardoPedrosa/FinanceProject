@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, LogOut, TrendingUp, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, LogOut, TrendingUp, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
-import { Category } from '../types'
+import { Category, UserMonthBudget } from '../types'
 import CategoryCard from '../components/CategoryCard'
 import CreateCategoryModal from '../components/CreateCategoryModal'
 import AddExpenseModal from '../components/AddExpenseModal'
 import ShareCategoryModal from '../components/ShareCategoryModal'
 import EditMonthConfigModal from '../components/EditMonthConfigModal'
 import ExpensesListModal from '../components/ExpensesListModal'
+import SetMonthBudgetModal from '../components/SetMonthBudgetModal'
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -28,6 +29,9 @@ const DashboardPage: React.FC = () => {
   const [initialized, setInitialized] = useState(false)
   const [error, setError] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+
+  const [globalBudget, setGlobalBudget] = useState<UserMonthBudget | null>(null)
+  const [showBudgetModal, setShowBudgetModal] = useState(false)
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [expenseTarget, setExpenseTarget] = useState<Category | null>(null)
@@ -49,9 +53,19 @@ const DashboardPage: React.FC = () => {
     }
   }, [])
 
+  const fetchGlobalBudget = useCallback(async (y: number, m: number) => {
+    try {
+      const { data } = await api.get<UserMonthBudget>(`/user-month-budget?year=${y}&month=${m}`)
+      setGlobalBudget(data)
+    } catch {
+      // non-critical — silently ignore
+    }
+  }, [])
+
   useEffect(() => {
     fetchCategories(year, month)
-  }, [fetchCategories, year, month])
+    fetchGlobalBudget(year, month)
+  }, [fetchCategories, fetchGlobalBudget, year, month])
 
   const prevMonth = () => {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }
@@ -71,7 +85,10 @@ const DashboardPage: React.FC = () => {
   const totalBudget = configuredCategories.reduce((s, c) => s + c.maxValue, 0)
   const budgetPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0
 
-  const refresh = () => fetchCategories(year, month)
+  const refresh = () => {
+    fetchCategories(year, month)
+    fetchGlobalBudget(year, month)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -132,8 +149,48 @@ const DashboardPage: React.FC = () => {
         {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Month Budget</p>
-            <p className="text-2xl font-bold text-gray-900">${totalBudget.toFixed(2)}</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Month Budget</p>
+              <button
+                onClick={() => setShowBudgetModal(true)}
+                className="text-gray-400 hover:text-indigo-600 transition-colors"
+                title="Set budget"
+              >
+                <Pencil size={13} />
+              </button>
+            </div>
+            {globalBudget?.isSet ? (
+              <>
+                <p className="text-2xl font-bold text-gray-900">${globalBudget.totalBudget.toFixed(2)}</p>
+                {(() => {
+                  const pct = Math.min((totalSpent / globalBudget.totalBudget) * 100, 100)
+                  const over = totalSpent > globalBudget.totalBudget
+                  const diff = Math.abs(globalBudget.totalBudget - totalSpent)
+                  return (
+                    <>
+                      <div className="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${over ? 'bg-red-500' : 'bg-indigo-500'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <p className={`text-xs mt-1 ${over ? 'text-red-500' : 'text-gray-400'}`}>
+                        {over
+                          ? `$${diff.toFixed(2)} over budget`
+                          : `$${diff.toFixed(2)} remaining`}
+                      </p>
+                    </>
+                  )
+                })()}
+              </>
+            ) : (
+              <button
+                onClick={() => setShowBudgetModal(true)}
+                className="text-sm text-indigo-500 hover:text-indigo-700 font-medium mt-1"
+              >
+                — Set Budget
+              </button>
+            )}
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Month Spent</p>
@@ -270,6 +327,16 @@ const DashboardPage: React.FC = () => {
           month={month}
           onClose={() => setExpensesListTarget(null)}
           onChanged={refresh}
+        />
+      )}
+
+      {showBudgetModal && (
+        <SetMonthBudgetModal
+          year={year}
+          month={month}
+          currentBudget={globalBudget?.totalBudget ?? 0}
+          onClose={() => setShowBudgetModal(false)}
+          onSaved={() => { setShowBudgetModal(false); fetchGlobalBudget(year, month) }}
         />
       )}
     </div>
