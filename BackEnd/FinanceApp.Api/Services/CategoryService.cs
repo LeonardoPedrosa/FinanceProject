@@ -2,6 +2,7 @@ using FinanceApp.Api.Models;
 using FinanceApp.Api.DTOs;
 using FinanceApp.Api.Services.Intefaces;
 using FinanceApp.Api.Data.Interfaces;
+using FinanceApp.Api.Exceptions;
 
 namespace FinanceApp.Api.Services;
 
@@ -96,13 +97,14 @@ public class CategoryService : ICategoryService
 
     public async Task<ExpenseResponseDto> AddExpenseAsync(Guid userId, Guid categoryId, CreateExpenseDto dto)
     {
+        // Fetch the category first — if it doesn't exist there's no point checking access
+        var category = await _categoryRepository.GetByIdAsync(categoryId);
+        if (category == null)
+            throw new NotFoundException("Category not found");
+
         var hasAccess = await _categoryRepository.UserHasAccessAsync(userId, categoryId);
         if (!hasAccess)
             throw new UnauthorizedAccessException("You don't have access to this category");
-
-        var category = await _categoryRepository.GetByIdAsync(categoryId);
-        if (category == null)
-            throw new Exception("Category not found");
 
         var expense = new Expense
         {
@@ -128,16 +130,15 @@ public class CategoryService : ICategoryService
     public async Task ShareCategoryAsync(Guid userId, Guid categoryId, ShareCategoryDto dto)
     {
         var category = await _categoryRepository.GetByIdAsync(categoryId);
-
         if (category == null)
-            throw new Exception("Category not found");
+            throw new NotFoundException("Category not found");
 
         if (category.OwnerId != userId)
             throw new UnauthorizedAccessException("Only the owner can share this category");
 
         var sharedWithUser = await _userRepository.GetByEmailAsync(dto.UserEmail);
         if (sharedWithUser == null)
-            throw new Exception("User not found");
+            throw new NotFoundException("User not found");
 
         var existingShare = await _shareRepository.GetShareAsync(categoryId, sharedWithUser.Id);
         if (existingShare != null)
@@ -154,11 +155,15 @@ public class CategoryService : ICategoryService
         await _shareRepository.SaveChangesAsync();
     }
 
-    public async Task<CategoryStatusDto> GetCategoryStatusAsync(Guid categoryId, int year, int month)
+    public async Task<CategoryStatusDto> GetCategoryStatusAsync(Guid userId, Guid categoryId, int year, int month)
     {
+        var hasAccess = await _categoryRepository.UserHasAccessAsync(userId, categoryId);
+        if (!hasAccess)
+            throw new UnauthorizedAccessException("You don't have access to this category");
+
         var category = await _categoryRepository.GetCategoryWithExpensesAsync(categoryId);
         if (category == null)
-            throw new Exception("Category not found");
+            throw new NotFoundException("Category not found");
 
         var config = await _monthConfigRepository.GetAsync(categoryId, year, month);
         var currentValue = category.Expenses
@@ -240,7 +245,7 @@ public class CategoryService : ICategoryService
 
         var category = await _categoryRepository.GetByIdAsync(categoryId);
         if (category == null)
-            throw new Exception("Category not found");
+            throw new NotFoundException("Category not found");
 
         var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(1).AddTicks(-1);
@@ -265,7 +270,7 @@ public class CategoryService : ICategoryService
 
         var expense = await _expenseRepository.GetExpenseWithDetailsAsync(expenseId);
         if (expense == null)
-            throw new Exception("Expense not found");
+            throw new NotFoundException("Expense not found");
 
         if (expense.CategoryId != categoryId)
             throw new UnauthorizedAccessException("Expense does not belong to this category");
@@ -294,7 +299,7 @@ public class CategoryService : ICategoryService
 
         var expense = await _expenseRepository.GetExpenseWithDetailsAsync(expenseId);
         if (expense == null)
-            throw new Exception("Expense not found");
+            throw new NotFoundException("Expense not found");
 
         if (expense.CategoryId != categoryId)
             throw new UnauthorizedAccessException("Expense does not belong to this category");
@@ -303,11 +308,11 @@ public class CategoryService : ICategoryService
         await _expenseRepository.SaveChangesAsync();
     }
 
-    public async Task<CategoryResponseDto> UpdateCategoryAsync(Guid userId, Guid categoryId, UpdateCategoryDto dto)
+    public async Task<CategoryResponseDto> UpdateCategoryAsync(Guid userId, Guid categoryId, UpdateCategoryDto dto, int year, int month)
     {
         var category = await _categoryRepository.GetByIdAsync(categoryId);
         if (category == null)
-            throw new Exception("Category not found");
+            throw new NotFoundException("Category not found");
 
         if (category.OwnerId != userId)
             throw new UnauthorizedAccessException("Only the owner can edit this category");
@@ -319,16 +324,23 @@ public class CategoryService : ICategoryService
         _categoryRepository.Update(category);
         await _categoryRepository.SaveChangesAsync();
 
+        var config = await _monthConfigRepository.GetAsync(categoryId, year, month);
+        var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var endDate = startDate.AddMonths(1).AddTicks(-1);
+        var expenses = await _expenseRepository.GetByDateRangeAsync(categoryId, startDate, endDate);
+        var currentValue = expenses.Sum(e => e.Amount);
+        var maxValue = config?.MaxValue ?? 0;
+
         return new CategoryResponseDto
         {
             Id = category.Id,
             Name = category.Name,
             Icon = category.Icon,
             Color = category.Color,
-            MaxValue = 0,
-            HasMonthConfig = false,
-            CurrentValue = 0,
-            IsOverLimit = false,
+            MaxValue = maxValue,
+            HasMonthConfig = config != null,
+            CurrentValue = currentValue,
+            IsOverLimit = config != null && currentValue > maxValue,
             IsOwner = true
         };
     }
