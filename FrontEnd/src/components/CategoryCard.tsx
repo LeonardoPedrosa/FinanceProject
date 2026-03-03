@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertTriangle, Plus, Share2, Settings, List } from 'lucide-react'
+import { AlertTriangle, Plus, Share2, Settings, List, Pencil } from 'lucide-react'
 import { Category } from '../types'
 import Icon from '../utils/icons'
 
@@ -9,9 +9,10 @@ interface Props {
   onShare: () => void
   onConfigure: () => void
   onViewExpenses: () => void
+  onEdit: () => void
 }
 
-const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConfigure, onViewExpenses }) => {
+const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConfigure, onViewExpenses, onEdit }) => {
   const percentage =
     category.maxValue > 0
       ? Math.min((category.currentValue / category.maxValue) * 100, 100)
@@ -125,6 +126,15 @@ const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConf
           >
             <Settings size={14} />
           </button>
+          {category.isOwner && (
+            <button
+              onClick={onEdit}
+              className="flex items-center justify-center gap-1.5 text-sm bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-1.5 transition-colors"
+              title="Edit category"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
           {category.isOwner && (
             <button
               onClick={onShare}

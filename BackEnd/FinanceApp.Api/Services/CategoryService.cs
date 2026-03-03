@@ -302,4 +302,34 @@ public class CategoryService : ICategoryService
         _expenseRepository.Delete(expense);
         await _expenseRepository.SaveChangesAsync();
     }
+
+    public async Task<CategoryResponseDto> UpdateCategoryAsync(Guid userId, Guid categoryId, UpdateCategoryDto dto)
+    {
+        var category = await _categoryRepository.GetByIdAsync(categoryId);
+        if (category == null)
+            throw new Exception("Category not found");
+
+        if (category.OwnerId != userId)
+            throw new UnauthorizedAccessException("Only the owner can edit this category");
+
+        category.Name = dto.Name;
+        category.Icon = dto.Icon;
+        category.Color = dto.Color;
+
+        _categoryRepository.Update(category);
+        await _categoryRepository.SaveChangesAsync();
+
+        return new CategoryResponseDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Icon = category.Icon,
+            Color = category.Color,
+            MaxValue = 0,
+            HasMonthConfig = false,
+            CurrentValue = 0,
+            IsOverLimit = false,
+            IsOwner = true
+        };
+    }
 }

@@ -14,5 +14,6 @@ namespace FinanceApp.Api.Services.Intefaces
         Task<List<ExpenseResponseDto>> GetCategoryExpensesAsync(Guid userId, Guid categoryId, int year, int month);
         Task<ExpenseResponseDto> UpdateExpenseAsync(Guid userId, Guid categoryId, Guid expenseId, UpdateExpenseDto dto);
         Task DeleteExpenseAsync(Guid userId, Guid categoryId, Guid expenseId);
+        Task<CategoryResponseDto> UpdateCategoryAsync(Guid userId, Guid categoryId, UpdateCategoryDto dto);
     }
 }

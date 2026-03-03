@@ -129,5 +129,23 @@ namespace FinanceApp.Api.Controllers
                 return NotFound(new { message = ex.Message });
             }
         }
+
+        [HttpPut("{categoryId}")]
+        public async Task<ActionResult<CategoryResponseDto>> UpdateCategory(Guid categoryId, UpdateCategoryDto dto)
+        {
+            try
+            {
+                var category = await _categoryService.UpdateCategoryAsync(GetUserId(), categoryId, dto);
+                return Ok(category);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex) when (ex.Message == "Category not found")
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
     }
 }
