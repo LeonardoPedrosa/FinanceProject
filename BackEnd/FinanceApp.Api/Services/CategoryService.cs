@@ -106,6 +106,52 @@ public class CategoryService : ICategoryService
         if (!hasAccess)
             throw new UnauthorizedAccessException("You don't have access to this category");
 
+        if (dto.Installments.HasValue && dto.Installments.Value > 1)
+        {
+            var n = dto.Installments.Value;
+            var groupId = Guid.NewGuid();
+            var baseAmount = Math.Round(dto.Amount / n, 2);
+            var firstAmount = dto.Amount - baseAmount * (n - 1);
+            var now = DateTime.UtcNow;
+            var baseDate = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            var installments = new List<Expense>();
+            for (int i = 0; i < n; i++)
+            {
+                var suffix = $" ({i + 1}/{n})";
+                var desc = string.IsNullOrEmpty(dto.Description)
+                    ? $"({i + 1}/{n})"
+                    : dto.Description + suffix;
+                installments.Add(new Expense
+                {
+                    CategoryId = categoryId,
+                    Amount = i == 0 ? firstAmount : baseAmount,
+                    Description = desc,
+                    UserId = userId,
+                    CreatedAt = baseDate.AddMonths(i),
+                    InstallmentGroupId = groupId,
+                    InstallmentNumber = i + 1,
+                    TotalInstallments = n
+                });
+            }
+
+            await _expenseRepository.AddRangeAsync(installments);
+            await _expenseRepository.SaveChangesAsync();
+
+            var first = installments[0];
+            return new ExpenseResponseDto
+            {
+                Id = first.Id,
+                Amount = first.Amount,
+                Description = first.Description,
+                CreatedAt = first.CreatedAt,
+                CategoryName = category.Name,
+                InstallmentGroupId = first.InstallmentGroupId,
+                InstallmentNumber = first.InstallmentNumber,
+                TotalInstallments = first.TotalInstallments
+            };
+        }
+
         var expense = new Expense
         {
             CategoryId = categoryId,
@@ -258,7 +304,10 @@ public class CategoryService : ICategoryService
             Amount = e.Amount,
             Description = e.Description,
             CreatedAt = e.CreatedAt,
-            CategoryName = category.Name
+            CategoryName = category.Name,
+            InstallmentGroupId = e.InstallmentGroupId,
+            InstallmentNumber = e.InstallmentNumber,
+            TotalInstallments = e.TotalInstallments
         }).ToList();
     }
 
@@ -287,7 +336,10 @@ public class CategoryService : ICategoryService
             Amount = expense.Amount,
             Description = expense.Description,
             CreatedAt = expense.CreatedAt,
-            CategoryName = expense.Category.Name
+            CategoryName = expense.Category.Name,
+            InstallmentGroupId = expense.InstallmentGroupId,
+            InstallmentNumber = expense.InstallmentNumber,
+            TotalInstallments = expense.TotalInstallments
         };
     }
 
@@ -304,7 +356,15 @@ public class CategoryService : ICategoryService
         if (expense.CategoryId != categoryId)
             throw new UnauthorizedAccessException("Expense does not belong to this category");
 
-        _expenseRepository.Delete(expense);
+        if (expense.InstallmentGroupId.HasValue)
+        {
+            var siblings = await _expenseRepository.GetByInstallmentGroupIdAsync(expense.InstallmentGroupId.Value);
+            _expenseRepository.DeleteRange(siblings);
+        }
+        else
+        {
+            _expenseRepository.Delete(expense);
+        }
         await _expenseRepository.SaveChangesAsync();
     }
 

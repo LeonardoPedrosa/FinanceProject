@@ -21,14 +21,25 @@ interface Props {
 const AddExpenseModal: React.FC<Props> = ({ category, onClose, onAdded }) => {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
+  const [useInstallments, setUseInstallments] = useState(false)
+  const [installments, setInstallments] = useState('2')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const parsed = parseFloat(amount) || 0
+  const installmentCount = parseInt(installments) || 2
+  const installmentAmount = useInstallments && parsed > 0
+    ? Math.round((parsed / installmentCount) * 100) / 100
+    : parsed
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const parsed = parseFloat(amount)
     if (isNaN(parsed) || parsed <= 0) {
       setError('Please enter a valid amount greater than 0.')
+      return
+    }
+    if (useInstallments && (installmentCount < 2 || installmentCount > 24)) {
+      setError('Installments must be between 2 and 24.')
       return
     }
     setError('')
@@ -37,6 +48,7 @@ const AddExpenseModal: React.FC<Props> = ({ category, onClose, onAdded }) => {
       await api.post(`/categories/${category.id}/expenses`, {
         amount: parsed,
         description: description.trim() || undefined,
+        installments: useInstallments ? installmentCount : undefined,
       })
       onAdded()
     } catch (err) {
@@ -46,8 +58,8 @@ const AddExpenseModal: React.FC<Props> = ({ category, onClose, onAdded }) => {
     }
   }
 
-  const projected = category.currentValue + (parseFloat(amount) || 0)
-  const willExceed = projected > category.maxValue
+  const projected = category.currentValue + installmentAmount
+  const willExceed = category.maxValue > 0 && projected > category.maxValue
 
   return (
     <div
@@ -139,6 +151,38 @@ const AddExpenseModal: React.FC<Props> = ({ category, onClose, onAdded }) => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
               placeholder="e.g. Grocery shopping, Doctor visit…"
             />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={useInstallments}
+                onChange={(e) => setUseInstallments(e.target.checked)}
+                className="w-4 h-4 accent-indigo-600"
+              />
+              <span className="text-sm font-medium text-gray-700">Split into installments</span>
+            </label>
+            {useInstallments && (
+              <div className="mt-2 flex items-center gap-3">
+                <div className="w-24">
+                  <label className="block text-xs text-gray-500 mb-1">Count (2–24)</label>
+                  <input
+                    type="number"
+                    value={installments}
+                    onChange={(e) => setInstallments(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    min="2"
+                    max="24"
+                  />
+                </div>
+                {parsed > 0 && (
+                  <p className="text-sm text-gray-500 mt-4">
+                    Each installment: <span className="font-semibold text-gray-700">${installmentAmount.toFixed(2)}</span>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-1">

@@ -31,6 +31,9 @@ export interface Expense {
   description: string | null
   createdAt: string
   categoryName: string
+  installmentGroupId: string | null
+  installmentNumber: number | null
+  totalInstallments: number | null
 }
 
 export interface UserMonthBudget {

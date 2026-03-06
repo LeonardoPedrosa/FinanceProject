@@ -66,5 +66,12 @@ namespace FinanceApp.Api.Data.Repositories
                 .Where(e => e.UserId == userId && e.CreatedAt >= startDate && e.CreatedAt < endDate)
                 .SumAsync(e => e.Amount);
         }
+
+        public async Task<IEnumerable<Expense>> GetByInstallmentGroupIdAsync(Guid groupId)
+        {
+            return await _dbSet
+                .Where(e => e.InstallmentGroupId == groupId)
+                .ToListAsync();
+        }
     }
 }

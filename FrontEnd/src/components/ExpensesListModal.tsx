@@ -89,11 +89,14 @@ const ExpensesListModal: React.FC<Props> = ({ category, year, month, onClose, on
     }
   }
 
-  const handleDelete = async (expenseId: string) => {
-    if (!window.confirm('Delete this expense?')) return
-    setDeletingId(expenseId)
+  const handleDelete = async (expense: Expense) => {
+    const message = expense.installmentGroupId
+      ? `Delete all ${expense.totalInstallments} installments? This will remove this expense from all months.`
+      : 'Delete this expense?'
+    if (!window.confirm(message)) return
+    setDeletingId(expense.id)
     try {
-      await api.delete(`/categories/${category.id}/expenses/${expenseId}`)
+      await api.delete(`/categories/${category.id}/expenses/${expense.id}`)
       await fetchExpenses()
       onChanged()
     } catch {
@@ -204,10 +207,15 @@ const ExpensesListModal: React.FC<Props> = ({ category, year, month, onClose, on
                   /* View mode row */
                   <div key={expense.id} className="flex items-center gap-3 py-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
+                      <div className="flex items-baseline gap-2 flex-wrap">
                         <span className="font-semibold text-gray-900">
                           ${expense.amount.toFixed(2)}
                         </span>
+                        {expense.installmentGroupId && (
+                          <span className="text-xs font-medium bg-indigo-100 text-indigo-600 rounded px-1.5 py-0.5">
+                            {expense.installmentNumber}/{expense.totalInstallments}
+                          </span>
+                        )}
                         <span className="text-xs text-gray-400">{formatDate(expense.createdAt)}</span>
                       </div>
                       <p className="text-sm text-gray-500 truncate">
@@ -225,7 +233,7 @@ const ExpensesListModal: React.FC<Props> = ({ category, year, month, onClose, on
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => handleDelete(expense.id)}
+                        onClick={() => handleDelete(expense)}
                         disabled={deletingId === expense.id}
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
                         title="Delete"

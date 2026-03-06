@@ -14,5 +14,8 @@ namespace FinanceApp.Api.DTOs
 
         [StringLength(500, ErrorMessage = "Description must not exceed 500 characters")]
         public string? Description { get; set; }
+
+        [Range(2, 24, ErrorMessage = "Installments must be between 2 and 24")]
+        public int? Installments { get; set; }
     }
 }
