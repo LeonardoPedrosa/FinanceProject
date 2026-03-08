@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertTriangle, Plus, Share2, Settings, List, Pencil } from 'lucide-react'
+import { AlertTriangle, Plus, Share2, Settings, List, Pencil, Lock } from 'lucide-react'
 import { Category } from '../types'
 import Icon from '../utils/icons'
 
@@ -40,7 +40,15 @@ const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConf
               <Icon name={category.icon} size={22} color={category.color} />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-gray-900 truncate">{category.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 truncate">{category.name}</h3>
+                {category.isPrivate && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-xs font-medium flex-shrink-0">
+                    <Lock size={10} />
+                    Private
+                  </span>
+                )}
+              </div>
               <span className="text-xs text-gray-400">
                 {category.isOwner
                   ? 'My category'
@@ -139,7 +147,7 @@ const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConf
               <Pencil size={14} />
             </button>
           )}
-          {category.isOwner && (
+          {category.isOwner && !category.isPrivate && (
             <button
               onClick={onShare}
               className="flex items-center justify-center gap-1.5 text-sm bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-1.5 transition-colors"
