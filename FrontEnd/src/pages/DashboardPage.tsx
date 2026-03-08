@@ -99,8 +99,8 @@ const DashboardPage: React.FC = () => {
 
   const budgetPercentage = effectiveBudget > 0 ? (totalSpent / effectiveBudget) * 100 : 0
 
-  const sharedSpending = categories.filter((c) => !c.isPrivate).reduce((s, c) => s + c.currentValue, 0)
-  const available = effectiveBudget - fixedExpensesTotal - sharedSpending
+  const publicBudget = categories.filter((c) => !c.isPrivate).reduce((s, c) => s + c.maxValue, 0)
+  const available = effectiveBudget - fixedExpensesTotal - publicBudget
 
   const refresh = () => {
     fetchCategories(year, month)
@@ -224,9 +224,9 @@ const DashboardPage: React.FC = () => {
             </p>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Shared Spending</p>
-            <p className="text-2xl font-bold text-gray-900">${sharedSpending.toFixed(2)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">Public categories</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Public Budget</p>
+            <p className="text-2xl font-bold text-gray-900">${publicBudget.toFixed(2)}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Public categories limit</p>
           </div>
           <div className={`rounded-xl p-4 shadow-sm border ${available < 0 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'}`}>
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Available</p>
