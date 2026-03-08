@@ -54,6 +54,23 @@ export interface SavingsGoalMonthSummary {
   badgeLabel: string
 }
 
+export interface FixedExpenseMonth {
+  id: string
+  fixedExpenseId: string
+  year: number
+  month: number
+  amount: number
+}
+
+export interface FixedExpense {
+  id: string
+  name: string
+  description: string | null
+  defaultAmount: number
+  currentMonthAmount: number
+  months: FixedExpenseMonth[]
+}
+
 export interface SavingsGoal {
   id: string
   userId: string

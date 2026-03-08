@@ -136,6 +136,9 @@ builder.Services.AddScoped<ISavingsGoalRepository, SavingsGoalRepository>();
 builder.Services.AddScoped<ISavingsGoalService, SavingsGoalService>();
 builder.Services.AddScoped<IUserMonthBudgetRepository, UserMonthBudgetRepository>();
 builder.Services.AddScoped<IUserMonthBudgetService, UserMonthBudgetService>();
+builder.Services.AddScoped<IFixedExpenseRepository, FixedExpenseRepository>();
+builder.Services.AddScoped<IFixedExpenseMonthRepository, FixedExpenseMonthRepository>();
+builder.Services.AddScoped<IFixedExpenseService, FixedExpenseService>();
 
 var app = builder.Build();
 

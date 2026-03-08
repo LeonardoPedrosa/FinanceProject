@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Plus, TrendingUp, AlertTriangle, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import api from '../api/client'
 import { Category, UserMonthBudget } from '../types'
+import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader'
 import CategoryCard from '../components/CategoryCard'
 import CreateCategoryModal from '../components/CreateCategoryModal'
@@ -29,6 +30,8 @@ const DashboardPage: React.FC = () => {
 
   const [globalBudget, setGlobalBudget] = useState<UserMonthBudget | null>(null)
   const [showBudgetModal, setShowBudgetModal] = useState(false)
+  const [fixedExpensesTotal, setFixedExpensesTotal] = useState(0)
+  const navigate = useNavigate()
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Category | null>(null)
@@ -60,10 +63,20 @@ const DashboardPage: React.FC = () => {
     }
   }, [])
 
+  const fetchFixedExpensesTotal = useCallback(async (y: number, m: number) => {
+    try {
+      const { data } = await api.get<{ total: number }>(`/fixed-expenses/total?year=${y}&month=${m}`)
+      setFixedExpensesTotal(data.total)
+    } catch {
+      // non-critical — silently ignore
+    }
+  }, [])
+
   useEffect(() => {
     fetchCategories(year, month)
     fetchGlobalBudget(year, month)
-  }, [fetchCategories, fetchGlobalBudget, year, month])
+    fetchFixedExpensesTotal(year, month)
+  }, [fetchCategories, fetchGlobalBudget, fetchFixedExpensesTotal, year, month])
 
   const prevMonth = () => {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }
@@ -78,7 +91,7 @@ const DashboardPage: React.FC = () => {
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1
 
   const overLimitCount = categories.filter((c) => c.isOverLimit).length
-  const totalSpent = categories.reduce((s, c) => s + c.currentValue, 0)
+  const totalSpent = categories.reduce((s, c) => s + c.currentValue, 0) + fixedExpensesTotal
   const configuredCategories = categories.filter((c) => c.hasMonthConfig)
   const totalBudget = configuredCategories.reduce((s, c) => s + c.maxValue, 0)
   const budgetPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0
@@ -86,6 +99,7 @@ const DashboardPage: React.FC = () => {
   const refresh = () => {
     fetchCategories(year, month)
     fetchGlobalBudget(year, month)
+    fetchFixedExpensesTotal(year, month)
   }
 
   return (
@@ -118,7 +132,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-1">
               <p className="text-xs text-gray-500 uppercase tracking-wide">Month Budget</p>
@@ -163,6 +177,14 @@ const DashboardPage: React.FC = () => {
               </button>
             )}
           </div>
+          <div
+            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:border-indigo-200 transition-colors"
+            onClick={() => navigate('/fixed-expenses')}
+          >
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Fixed Expenses</p>
+            <p className="text-2xl font-bold text-gray-900">${fixedExpensesTotal.toFixed(2)}</p>
+            <p className="text-xs text-indigo-400 mt-0.5">View details →</p>
+          </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Month Spent</p>
             <p
@@ -177,7 +199,7 @@ const DashboardPage: React.FC = () => {
             )}
           </div>
           <div
-            className={`col-span-2 sm:col-span-1 rounded-xl p-4 shadow-sm border ${
+            className={`rounded-xl p-4 shadow-sm border ${
               overLimitCount > 0 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'
             }`}
           >

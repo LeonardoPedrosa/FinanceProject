@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 interface Props {
-  currentPage: 'dashboard' | 'savings-goals'
+  currentPage: 'dashboard' | 'savings-goals' | 'fixed-expenses'
   refreshing?: boolean
 }
 
@@ -39,6 +39,14 @@ const AppHeader: React.FC<Props> = ({ currentPage, refreshing }) => {
               className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
             >
               Savings Goals
+            </button>
+          )}
+          {currentPage !== 'fixed-expenses' && (
+            <button
+              onClick={() => navigate('/fixed-expenses')}
+              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            >
+              Fixed Expenses
             </button>
           )}
           <span className="text-sm text-gray-600">
@@ -86,6 +94,14 @@ const AppHeader: React.FC<Props> = ({ currentPage, refreshing }) => {
               className="text-left text-sm font-medium text-indigo-600 hover:text-indigo-800 py-2 transition-colors"
             >
               Savings Goals
+            </button>
+          )}
+          {currentPage !== 'fixed-expenses' && (
+            <button
+              onClick={() => { navigate('/fixed-expenses'); setMenuOpen(false) }}
+              className="text-left text-sm font-medium text-indigo-600 hover:text-indigo-800 py-2 transition-colors"
+            >
+              Fixed Expenses
             </button>
           )}
           <button

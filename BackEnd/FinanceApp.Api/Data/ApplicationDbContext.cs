@@ -14,6 +14,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<CategoryMonthConfig> CategoryMonthConfigs { get; set; }
     public DbSet<SavingsGoal> SavingsGoals { get; set; }
     public DbSet<UserMonthBudget> UserMonthBudgets { get; set; }
+    public DbSet<FixedExpense> FixedExpenses { get; set; }
+    public DbSet<FixedExpenseMonth> FixedExpenseMonths { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -62,6 +64,30 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<UserMonthBudget>()
             .HasIndex(b => new { b.UserId, b.Year, b.Month })
+            .IsUnique();
+
+        modelBuilder.Entity<FixedExpense>()
+            .HasOne(f => f.User)
+            .WithMany()
+            .HasForeignKey(f => f.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FixedExpense>()
+            .Property(f => f.Name)
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<FixedExpense>()
+            .Property(f => f.Description)
+            .HasMaxLength(500);
+
+        modelBuilder.Entity<FixedExpenseMonth>()
+            .HasOne(m => m.FixedExpense)
+            .WithMany(f => f.Months)
+            .HasForeignKey(m => m.FixedExpenseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FixedExpenseMonth>()
+            .HasIndex(m => new { m.FixedExpenseId, m.Year, m.Month })
             .IsUnique();
     }
 }
