@@ -99,6 +99,9 @@ const DashboardPage: React.FC = () => {
 
   const budgetPercentage = effectiveBudget > 0 ? (totalSpent / effectiveBudget) * 100 : 0
 
+  const sharedSpending = categories.filter((c) => !c.isPrivate).reduce((s, c) => s + c.currentValue, 0)
+  const available = effectiveBudget - fixedExpensesTotal - sharedSpending
+
   const refresh = () => {
     fetchCategories(year, month)
     fetchGlobalBudget(year, month)
@@ -135,7 +138,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-1">
               <p className="text-xs text-gray-500 uppercase tracking-wide">Month Budget</p>
@@ -219,6 +222,18 @@ const DashboardPage: React.FC = () => {
             <p className="text-xs text-gray-400 mt-0.5">
               {overLimitCount === 1 ? '1 category over limit' : `${overLimitCount} categories over limit`}
             </p>
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Shared Spending</p>
+            <p className="text-2xl font-bold text-gray-900">${sharedSpending.toFixed(2)}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Public categories</p>
+          </div>
+          <div className={`rounded-xl p-4 shadow-sm border ${available < 0 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'}`}>
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Available</p>
+            <p className={`text-2xl font-bold ${available < 0 ? 'text-red-600' : 'text-gray-900'}`}>
+              ${available.toFixed(2)}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">Budget − Fixed − Shared</p>
           </div>
         </div>
 
