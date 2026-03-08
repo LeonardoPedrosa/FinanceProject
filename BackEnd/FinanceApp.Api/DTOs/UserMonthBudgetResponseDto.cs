@@ -7,5 +7,6 @@ namespace FinanceApp.Api.DTOs
         public int Month { get; set; }
         public decimal TotalBudget { get; set; }
         public bool IsSet { get; set; }
+        public decimal? PartnerTotalBudget { get; set; }
     }
 }

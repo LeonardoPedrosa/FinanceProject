@@ -15,26 +15,31 @@ const FixedExpenseCard: React.FC<Props> = ({ expense, onEdit, onDelete, onViewMo
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 truncate">{expense.name}</h3>
-          {expense.description && (
+          {expense.ownerName !== null && (
+            <p className="text-xs text-gray-400 mt-0.5">From {expense.ownerName}</p>
+          )}
+          {expense.ownerName === null && expense.description && (
             <p className="text-xs text-gray-400 mt-0.5 truncate">{expense.description}</p>
           )}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            onClick={onEdit}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-            title="Edit"
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-            title="Delete"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+        {expense.ownerName === null && (
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={onEdit}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+              title="Edit"
+            >
+              <Pencil size={14} />
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              title="Delete"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between">

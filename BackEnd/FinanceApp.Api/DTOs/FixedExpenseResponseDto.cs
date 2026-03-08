@@ -8,5 +8,6 @@ namespace FinanceApp.Api.DTOs
         public decimal DefaultAmount { get; set; }
         public decimal CurrentMonthAmount { get; set; }
         public List<FixedExpenseMonthDto> Months { get; set; } = new();
+        public string? OwnerName { get; set; }
     }
 }

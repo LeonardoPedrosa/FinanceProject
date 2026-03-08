@@ -55,6 +55,7 @@ export interface UserMonthBudget {
   month: number
   totalBudget: number
   isSet: boolean
+  partnerTotalBudget?: number | null
 }
 
 export interface SavingsGoalMonthSummary {
@@ -82,6 +83,7 @@ export interface FixedExpense {
   defaultAmount: number
   currentMonthAmount: number
   months: FixedExpenseMonth[]
+  ownerName: string | null
 }
 
 export interface SavingsGoal {

@@ -65,8 +65,17 @@ namespace FinanceApp.Api.Data.Repositories
             if (category.OwnerId == userId)
                 return true;
 
-            return await _context.CategoryShares
+            var hasShare = await _context.CategoryShares
                 .AnyAsync(cs => cs.CategoryId == categoryId && cs.SharedWithUserId == userId);
+            if (hasShare) return true;
+
+            if (!category.IsPrivate)
+            {
+                return await _context.UserConnections
+                    .AnyAsync(uc => uc.ReceiverId == userId && uc.SharerId == category.OwnerId);
+            }
+
+            return false;
         }
 
         public async Task<decimal> GetCategoryTotalExpensesAsync(Guid categoryId)

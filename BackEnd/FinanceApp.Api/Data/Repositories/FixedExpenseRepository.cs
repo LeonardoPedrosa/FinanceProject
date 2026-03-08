@@ -17,6 +17,16 @@ namespace FinanceApp.Api.Data.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<FixedExpense>> GetByUserIdsAsync(IEnumerable<Guid> userIds)
+        {
+            return await _dbSet
+                .Where(f => userIds.Contains(f.UserId))
+                .Include(f => f.User)
+                .Include(f => f.Months)
+                .OrderBy(f => f.Name)
+                .ToListAsync();
+        }
+
         public async Task<FixedExpense?> GetByIdWithMonthsAsync(Guid id)
         {
             return await _dbSet

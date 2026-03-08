@@ -109,15 +109,13 @@ const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConf
 
         {/* Actions */}
         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-50">
-          {(category.isOwner || category.ownerName === null) && (
-            <button
-              onClick={onAddExpense}
-              className="flex-1 flex items-center justify-center gap-1.5 text-sm bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg py-1.5 transition-colors font-medium"
-            >
-              <Plus size={14} />
-              Add Expense
-            </button>
-          )}
+          <button
+            onClick={onAddExpense}
+            className="flex-1 flex items-center justify-center gap-1.5 text-sm bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg py-1.5 transition-colors font-medium"
+          >
+            <Plus size={14} />
+            Add Expense
+          </button>
           <button
             onClick={onViewExpenses}
             className="flex items-center justify-center gap-1.5 text-sm bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-1.5 transition-colors"

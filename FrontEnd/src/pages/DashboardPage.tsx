@@ -168,6 +168,11 @@ const DashboardPage: React.FC = () => {
                     </>
                   )
                 })()}
+                {globalBudget.partnerTotalBudget != null && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Partner's budget: ${globalBudget.partnerTotalBudget.toFixed(2)}
+                  </p>
+                )}
               </>
             ) : (
               <button

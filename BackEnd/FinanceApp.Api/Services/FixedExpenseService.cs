@@ -23,8 +23,18 @@ namespace FinanceApp.Api.Services
 
         public async Task<List<FixedExpenseResponseDto>> GetAllAsync(Guid userId, int year, int month)
         {
-            var expenses = await _fixedExpenseRepository.GetByUserIdAsync(userId);
-            return expenses.Select(e => MapToDto(e, year, month)).ToList();
+            var own = await _fixedExpenseRepository.GetByUserIdAsync(userId);
+            var result = own.Select(e => MapToDto(e, year, month)).ToList();
+
+            var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
+            var sharerIds = connections.Select(c => c.SharerId).ToList();
+            if (sharerIds.Any())
+            {
+                var partnerExpenses = await _fixedExpenseRepository.GetByUserIdsAsync(sharerIds);
+                result.AddRange(partnerExpenses.Select(e => MapToDto(e, year, month, e.User.Name)));
+            }
+
+            return result;
         }
 
         public async Task<FixedExpenseResponseDto> GetByIdAsync(Guid userId, Guid id)
@@ -133,7 +143,7 @@ namespace FinanceApp.Api.Services
             await _fixedExpenseMonthRepository.SaveChangesAsync();
         }
 
-        private static FixedExpenseResponseDto MapToDto(FixedExpense expense, int year, int month)
+        private static FixedExpenseResponseDto MapToDto(FixedExpense expense, int year, int month, string? ownerName = null)
         {
             var months = expense.Months
                 .OrderBy(m => m.Year)
@@ -157,7 +167,8 @@ namespace FinanceApp.Api.Services
                 Description = expense.Description,
                 DefaultAmount = expense.DefaultAmount,
                 CurrentMonthAmount = currentMonth?.Amount ?? expense.DefaultAmount,
-                Months = months
+                Months = months,
+                OwnerName = ownerName
             };
         }
     }

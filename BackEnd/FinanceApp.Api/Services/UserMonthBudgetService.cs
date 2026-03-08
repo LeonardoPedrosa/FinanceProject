@@ -8,27 +8,31 @@ namespace FinanceApp.Api.Services
     public class UserMonthBudgetService : IUserMonthBudgetService
     {
         private readonly IUserMonthBudgetRepository _repo;
+        private readonly IUserConnectionRepository _connectionRepository;
 
-        public UserMonthBudgetService(IUserMonthBudgetRepository repo)
+        public UserMonthBudgetService(IUserMonthBudgetRepository repo, IUserConnectionRepository connectionRepository)
         {
             _repo = repo;
+            _connectionRepository = connectionRepository;
         }
 
         public async Task<UserMonthBudgetResponseDto> GetAsync(Guid userId, int year, int month)
         {
             var budget = await _repo.GetAsync(userId, year, month);
 
-            if (budget == null)
-                return new UserMonthBudgetResponseDto { IsSet = false, TotalBudget = 0, Year = year, Month = month };
+            var dto = budget == null
+                ? new UserMonthBudgetResponseDto { IsSet = false, TotalBudget = 0, Year = year, Month = month }
+                : new UserMonthBudgetResponseDto { Id = budget.Id, Year = budget.Year, Month = budget.Month, TotalBudget = budget.TotalBudget, IsSet = true };
 
-            return new UserMonthBudgetResponseDto
+            var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
+            var firstSharer = connections.FirstOrDefault();
+            if (firstSharer != null)
             {
-                Id = budget.Id,
-                Year = budget.Year,
-                Month = budget.Month,
-                TotalBudget = budget.TotalBudget,
-                IsSet = true
-            };
+                var partnerBudget = await _repo.GetAsync(firstSharer.SharerId, year, month);
+                dto.PartnerTotalBudget = partnerBudget?.TotalBudget;
+            }
+
+            return dto;
         }
 
         public async Task<UserMonthBudgetResponseDto> UpsertAsync(Guid userId, int year, int month, UpsertUserMonthBudgetDto dto)
