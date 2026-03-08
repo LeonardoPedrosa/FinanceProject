@@ -92,10 +92,12 @@ const DashboardPage: React.FC = () => {
 
   const overLimitCount = categories.filter((c) => c.isOverLimit).length
   const totalSpent = categories.reduce((s, c) => s + c.currentValue, 0) + fixedExpensesTotal
-  const budgetPercentage =
+  const effectiveBudget =
     globalBudget?.isSet && globalBudget.totalBudget > 0
-      ? (totalSpent / globalBudget.totalBudget) * 100
-      : 0
+      ? globalBudget.totalBudget
+      : (globalBudget?.partnerTotalBudget ?? 0)
+
+  const budgetPercentage = effectiveBudget > 0 ? (totalSpent / effectiveBudget) * 100 : 0
 
   const refresh = () => {
     fetchCategories(year, month)
@@ -203,7 +205,7 @@ const DashboardPage: React.FC = () => {
             >
               ${totalSpent.toFixed(2)}
             </p>
-            {globalBudget?.isSet && (
+            {effectiveBudget > 0 && (
               <p className="text-xs text-gray-400 mt-0.5">{budgetPercentage.toFixed(0)}% of budget</p>
             )}
           </div>
