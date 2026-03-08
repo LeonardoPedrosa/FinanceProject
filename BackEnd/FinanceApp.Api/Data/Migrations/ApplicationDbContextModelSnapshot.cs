@@ -258,6 +258,69 @@ namespace FinanceApp.Api.Data.Migrations
                     b.ToTable("UserMonthBudgets");
                 });
 
+            modelBuilder.Entity("FinanceApp.Api.Models.FixedExpense", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("DefaultAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("FixedExpenses");
+                });
+
+            modelBuilder.Entity("FinanceApp.Api.Models.FixedExpenseMonth", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FixedExpenseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FixedExpenseId", "Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("FixedExpenseMonths");
+                });
+
             modelBuilder.Entity("FinanceApp.Api.Models.Category", b =>
                 {
                     b.HasOne("FinanceApp.Api.Models.User", "Owner")
@@ -338,6 +401,30 @@ namespace FinanceApp.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FinanceApp.Api.Models.FixedExpense", b =>
+                {
+                    b.HasOne("FinanceApp.Api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Months");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FinanceApp.Api.Models.FixedExpenseMonth", b =>
+                {
+                    b.HasOne("FinanceApp.Api.Models.FixedExpense", "FixedExpense")
+                        .WithMany("Months")
+                        .HasForeignKey("FixedExpenseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FixedExpense");
                 });
 
             modelBuilder.Entity("FinanceApp.Api.Models.Category", b =>
