@@ -411,8 +411,6 @@ namespace FinanceApp.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Months");
-
                     b.Navigation("User");
                 });
 
@@ -425,6 +423,11 @@ namespace FinanceApp.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("FixedExpense");
+                });
+
+            modelBuilder.Entity("FinanceApp.Api.Models.FixedExpense", b =>
+                {
+                    b.Navigation("Months");
                 });
 
             modelBuilder.Entity("FinanceApp.Api.Models.Category", b =>
