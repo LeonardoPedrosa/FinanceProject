@@ -24,11 +24,10 @@ namespace FinanceApp.Api.Services
                 ? new UserMonthBudgetResponseDto { IsSet = false, TotalBudget = 0, Year = year, Month = month }
                 : new UserMonthBudgetResponseDto { Id = budget.Id, Year = budget.Year, Month = budget.Month, TotalBudget = budget.TotalBudget, IsSet = true };
 
-            var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
-            var firstSharer = connections.FirstOrDefault();
-            if (firstSharer != null)
+            var partnerId = await _connectionRepository.GetPartnerIdAsync(userId);
+            if (partnerId.HasValue)
             {
-                var partnerBudget = await _repo.GetAsync(firstSharer.SharerId, year, month);
+                var partnerBudget = await _repo.GetAsync(partnerId.Value, year, month);
                 dto.PartnerTotalBudget = partnerBudget?.TotalBudget;
             }
 

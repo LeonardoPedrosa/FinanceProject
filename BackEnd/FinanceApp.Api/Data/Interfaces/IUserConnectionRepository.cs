@@ -7,5 +7,6 @@ namespace FinanceApp.Api.Data.Interfaces
         Task<IEnumerable<UserConnection>> GetBySharerIdAsync(Guid sharerId);
         Task<IEnumerable<UserConnection>> GetByReceiverIdAsync(Guid receiverId);
         Task<UserConnection?> GetAsync(Guid sharerId, Guid receiverId);
+        Task<Guid?> GetPartnerIdAsync(Guid userId);
     }
 }

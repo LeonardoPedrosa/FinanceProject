@@ -38,11 +38,11 @@ public class CategoryService : ICategoryService
 
         var seenIds = new HashSet<Guid>(ownedCategories.Select(c => c.Id).Concat(sharedCategories.Select(c => c.Id)));
 
-        var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
-        var sharerIds = connections.Select(c => c.SharerId).ToList();
+        var partnerId = await _connectionRepository.GetPartnerIdAsync(userId);
+        var partnerIds = partnerId.HasValue ? new List<Guid> { partnerId.Value } : new List<Guid>();
 
-        var connectionCategories = sharerIds.Any()
-            ? await _categoryRepository.GetConnectionSharedCategoriesAsync(sharerIds, year, month)
+        var connectionCategories = partnerIds.Any()
+            ? await _categoryRepository.GetConnectionSharedCategoriesAsync(partnerIds, year, month)
             : Enumerable.Empty<Models.Category>();
 
         var result = new List<CategoryResponseDto>();

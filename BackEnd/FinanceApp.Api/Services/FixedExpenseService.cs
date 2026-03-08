@@ -26,11 +26,10 @@ namespace FinanceApp.Api.Services
             var own = await _fixedExpenseRepository.GetByUserIdAsync(userId);
             var result = own.Select(e => MapToDto(e, year, month)).ToList();
 
-            var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
-            var sharerIds = connections.Select(c => c.SharerId).ToList();
-            if (sharerIds.Any())
+            var partnerId = await _connectionRepository.GetPartnerIdAsync(userId);
+            if (partnerId.HasValue)
             {
-                var partnerExpenses = await _fixedExpenseRepository.GetByUserIdsAsync(sharerIds);
+                var partnerExpenses = await _fixedExpenseRepository.GetByUserIdsAsync(new[] { partnerId.Value });
                 result.AddRange(partnerExpenses.Select(e => MapToDto(e, year, month, e.User.Name)));
             }
 
@@ -52,12 +51,11 @@ namespace FinanceApp.Api.Services
             var months = await _fixedExpenseMonthRepository.GetByUserMonthAsync(userId, year, month);
             var total = months.Sum(m => m.Amount);
 
-            var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
-            var sharerIds = connections.Select(c => c.SharerId).ToList();
-            if (sharerIds.Any())
+            var partnerId = await _connectionRepository.GetPartnerIdAsync(userId);
+            if (partnerId.HasValue)
             {
-                var sharerMonths = await _fixedExpenseMonthRepository.GetByUserIdsMonthAsync(sharerIds, year, month);
-                total += sharerMonths.Sum(m => m.Amount);
+                var partnerMonths = await _fixedExpenseMonthRepository.GetByUserIdsMonthAsync(new[] { partnerId.Value }, year, month);
+                total += partnerMonths.Sum(m => m.Amount);
             }
 
             return total;

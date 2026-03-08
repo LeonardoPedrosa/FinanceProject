@@ -72,7 +72,9 @@ namespace FinanceApp.Api.Data.Repositories
             if (!category.IsPrivate)
             {
                 return await _context.UserConnections
-                    .AnyAsync(uc => uc.ReceiverId == userId && uc.SharerId == category.OwnerId);
+                    .AnyAsync(uc =>
+                        (uc.ReceiverId == userId && uc.SharerId == category.OwnerId) ||
+                        (uc.SharerId == userId && uc.ReceiverId == category.OwnerId));
             }
 
             return false;
