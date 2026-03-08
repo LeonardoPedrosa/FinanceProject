@@ -60,6 +60,32 @@ namespace FinanceApp.Api.Services
 
             await _repo.SaveChangesAsync();
 
+            // Keep partner's budget in sync
+            var partnerId = await _connectionRepository.GetPartnerIdAsync(userId);
+            if (partnerId.HasValue)
+            {
+                var partnerExisting = await _repo.GetAsync(partnerId.Value, year, month);
+                if (partnerExisting == null)
+                {
+                    await _repo.AddAsync(new UserMonthBudget
+                    {
+                        UserId = partnerId.Value,
+                        Year = year,
+                        Month = month,
+                        TotalBudget = dto.TotalBudget,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    });
+                }
+                else
+                {
+                    partnerExisting.TotalBudget = dto.TotalBudget;
+                    partnerExisting.UpdatedAt = DateTime.UtcNow;
+                    _repo.Update(partnerExisting);
+                }
+                await _repo.SaveChangesAsync();
+            }
+
             return new UserMonthBudgetResponseDto
             {
                 Id = existing.Id,
