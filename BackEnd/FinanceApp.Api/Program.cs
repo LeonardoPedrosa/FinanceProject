@@ -182,7 +182,7 @@ using (var scope = app.Services.CreateScope())
             }
             catch (Exception ex)
             {
-                logger.LogWarning($"Migration attempt {i} failed: {ex.Message}");
+                logger.LogWarning($"Migration attempt {i} failed: {ex}");
                 Thread.Sleep(3000);
             }
         }
