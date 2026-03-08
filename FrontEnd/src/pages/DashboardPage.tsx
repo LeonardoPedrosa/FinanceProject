@@ -147,13 +147,13 @@ const DashboardPage: React.FC = () => {
                 <Pencil size={13} />
               </button>
             </div>
-            {globalBudget?.isSet ? (
+            {effectiveBudget > 0 ? (
               <>
-                <p className="text-2xl font-bold text-gray-900">${globalBudget.totalBudget.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-gray-900">${effectiveBudget.toFixed(2)}</p>
                 {(() => {
-                  const pct = Math.min((totalSpent / globalBudget.totalBudget) * 100, 100)
-                  const over = totalSpent > globalBudget.totalBudget
-                  const diff = Math.abs(globalBudget.totalBudget - totalSpent)
+                  const pct = Math.min((totalSpent / effectiveBudget) * 100, 100)
+                  const over = totalSpent > effectiveBudget
+                  const diff = Math.abs(effectiveBudget - totalSpent)
                   return (
                     <>
                       <div className="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
@@ -170,11 +170,6 @@ const DashboardPage: React.FC = () => {
                     </>
                   )
                 })()}
-                {globalBudget.partnerTotalBudget != null && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    Partner's budget: ${globalBudget.partnerTotalBudget.toFixed(2)}
-                  </p>
-                )}
               </>
             ) : (
               <button
@@ -339,7 +334,7 @@ const DashboardPage: React.FC = () => {
         <SetMonthBudgetModal
           year={year}
           month={month}
-          currentBudget={globalBudget?.totalBudget ?? 0}
+          currentBudget={effectiveBudget}
           onClose={() => setShowBudgetModal(false)}
           onSaved={() => { setShowBudgetModal(false); fetchGlobalBudget(year, month) }}
         />
