@@ -57,7 +57,10 @@ namespace FinanceApp.Api.Data.Repositories
 
         public async Task<bool> UserHasAccessAsync(Guid userId, Guid categoryId)
         {
-            var category = await _dbSet.FindAsync(categoryId);
+            var category = await _dbSet
+                .AsNoTracking()
+                .Select(c => new { c.Id, c.OwnerId, c.IsPrivate })
+                .FirstOrDefaultAsync(c => c.Id == categoryId);
 
             if (category == null)
                 return false;
@@ -80,7 +83,7 @@ namespace FinanceApp.Api.Data.Repositories
             return false;
         }
 
-        public async Task<IEnumerable<Category>> GetConnectionSharedCategoriesAsync(IEnumerable<Guid> sharerIds, int year, int month)
+        public async Task<IEnumerable<Category>> GetConnectionSharedCategoriesAsync(IReadOnlyCollection<Guid> sharerIds, int year, int month)
         {
             var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
             var endDate = startDate.AddMonths(1);

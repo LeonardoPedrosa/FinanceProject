@@ -9,6 +9,6 @@ namespace FinanceApp.Api.Data.Interfaces
         Task<Category?> GetCategoryWithExpensesAsync(Guid categoryId);
         Task<Category?> GetCategoryWithSharesAsync(Guid categoryId);
         Task<bool> UserHasAccessAsync(Guid userId, Guid categoryId);
-        Task<IEnumerable<Category>> GetConnectionSharedCategoriesAsync(IEnumerable<Guid> sharerIds, int year, int month);
+        Task<IEnumerable<Category>> GetConnectionSharedCategoriesAsync(IReadOnlyCollection<Guid> sharerIds, int year, int month);
     }
 }

@@ -68,6 +68,10 @@ namespace FinanceApp.Api.Controllers
             {
                 return Forbid();
             }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
             catch (NotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });

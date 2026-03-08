@@ -31,7 +31,7 @@ namespace FinanceApp.Api.Data.Repositories
                 .FirstOrDefaultAsync(m => m.FixedExpenseId == fixedExpenseId && m.Year == year && m.Month == month);
         }
 
-        public async Task<IEnumerable<FixedExpenseMonth>> GetByUserIdsMonthAsync(IEnumerable<Guid> userIds, int year, int month)
+        public async Task<IEnumerable<FixedExpenseMonth>> GetByUserIdsMonthAsync(IReadOnlyCollection<Guid> userIds, int year, int month)
         {
             return await _dbSet
                 .Where(m => userIds.Contains(m.FixedExpense.UserId) && m.Year == year && m.Month == month)

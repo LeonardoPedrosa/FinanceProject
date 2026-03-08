@@ -17,7 +17,7 @@ namespace FinanceApp.Api.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<FixedExpense>> GetByUserIdsAsync(IEnumerable<Guid> userIds)
+        public async Task<IEnumerable<FixedExpense>> GetByUserIdsAsync(IReadOnlyCollection<Guid> userIds)
         {
             return await _dbSet
                 .Where(f => userIds.Contains(f.UserId))

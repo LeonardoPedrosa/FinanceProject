@@ -229,7 +229,7 @@ public class CategoryService : ICategoryService
 
         var existingShare = await _shareRepository.GetShareAsync(categoryId, sharedWithUser.Id);
         if (existingShare != null)
-            throw new Exception("Category already shared with this user");
+            throw new InvalidOperationException("Category already shared with this user");
 
         var share = new CategoryShare
         {
