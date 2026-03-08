@@ -8,24 +8,6 @@ namespace FinanceApp.Api.Data.Repositories
     {
         public UserConnectionRepository(ApplicationDbContext context) : base(context) { }
 
-        public async Task<IEnumerable<UserConnection>> GetBySharerIdAsync(Guid sharerId)
-        {
-            return await _dbSet
-                .Where(uc => uc.SharerId == sharerId)
-                .Include(uc => uc.Receiver)
-                .OrderBy(uc => uc.CreatedAt)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<UserConnection>> GetByReceiverIdAsync(Guid receiverId)
-        {
-            return await _dbSet
-                .Where(uc => uc.ReceiverId == receiverId)
-                .Include(uc => uc.Sharer)
-                .OrderBy(uc => uc.CreatedAt)
-                .ToListAsync();
-        }
-
         public async Task<UserConnection?> GetAsync(Guid sharerId, Guid receiverId)
         {
             return await _dbSet

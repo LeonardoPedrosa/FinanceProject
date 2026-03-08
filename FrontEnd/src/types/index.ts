@@ -18,17 +18,6 @@ export interface Category {
   ownerName: string | null
 }
 
-export interface UserConnection {
-  id: string
-  sharerId: string
-  sharerName: string
-  sharerEmail: string
-  receiverId: string
-  receiverName: string
-  receiverEmail: string
-  createdAt: string
-}
-
 export interface MyConnection {
   connectionId: string
   partnerId: string

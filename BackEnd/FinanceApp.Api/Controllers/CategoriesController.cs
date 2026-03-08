@@ -74,26 +74,6 @@ namespace FinanceApp.Api.Controllers
             }
         }
 
-        [HttpGet("{categoryId}/status")]
-        public async Task<ActionResult<CategoryStatusDto>> GetCategoryStatus(Guid categoryId, [FromQuery] int? year, [FromQuery] int? month)
-        {
-            var now = DateTime.UtcNow;
-            try
-            {
-                var status = await _categoryService.GetCategoryStatusAsync(
-                    GetUserId(), categoryId, year ?? now.Year, month ?? now.Month);
-                return Ok(status);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-        }
-
         [HttpPut("{categoryId}/month-config")]
         public async Task<ActionResult<MonthConfigResponseDto>> UpsertMonthConfig(Guid categoryId, UpsertMonthConfigDto dto)
         {

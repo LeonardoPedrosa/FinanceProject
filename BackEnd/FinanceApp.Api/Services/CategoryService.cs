@@ -242,33 +242,6 @@ public class CategoryService : ICategoryService
         await _shareRepository.SaveChangesAsync();
     }
 
-    public async Task<CategoryStatusDto> GetCategoryStatusAsync(Guid userId, Guid categoryId, int year, int month)
-    {
-        var hasAccess = await _categoryRepository.UserHasAccessAsync(userId, categoryId);
-        if (!hasAccess)
-            throw new UnauthorizedAccessException("You don't have access to this category");
-
-        var category = await _categoryRepository.GetCategoryWithExpensesAsync(categoryId);
-        if (category == null)
-            throw new NotFoundException("Category not found");
-
-        var config = await _monthConfigRepository.GetAsync(categoryId, year, month);
-        var currentValue = category.Expenses
-            .Where(e => e.CreatedAt.Year == year && e.CreatedAt.Month == month)
-            .Sum(e => e.Amount);
-        var maxValue = config?.MaxValue ?? 0;
-
-        return new CategoryStatusDto
-        {
-            CategoryId = category.Id,
-            CategoryName = category.Name,
-            MaxValue = maxValue,
-            CurrentValue = currentValue,
-            IsOverLimit = config != null && currentValue > maxValue,
-            Percentage = maxValue > 0 ? (currentValue / maxValue) * 100 : 0
-        };
-    }
-
     public async Task<MonthConfigResponseDto> UpsertMonthConfigAsync(Guid userId, Guid categoryId, UpsertMonthConfigDto dto)
     {
         var hasAccess = await _categoryRepository.UserHasAccessAsync(userId, categoryId);

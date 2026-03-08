@@ -44,22 +44,6 @@ namespace FinanceApp.Api.Controllers
             });
         }
 
-        [HttpGet("as-sharer")]
-        public async Task<ActionResult<IEnumerable<UserConnectionResponseDto>>> GetAsSharer()
-        {
-            var userId = GetUserId();
-            var connections = await _connectionRepository.GetBySharerIdAsync(userId);
-            return Ok(connections.Select(MapToDto));
-        }
-
-        [HttpGet("as-receiver")]
-        public async Task<ActionResult<IEnumerable<UserConnectionResponseDto>>> GetAsReceiver()
-        {
-            var userId = GetUserId();
-            var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
-            return Ok(connections.Select(MapToDto));
-        }
-
         [HttpPost]
         public async Task<ActionResult<MyConnectionResponseDto>> Create([FromBody] CreateUserConnectionDto dto)
         {
@@ -117,16 +101,5 @@ namespace FinanceApp.Api.Controllers
             return NoContent();
         }
 
-        private static UserConnectionResponseDto MapToDto(UserConnection uc) => new()
-        {
-            Id = uc.Id,
-            SharerId = uc.SharerId,
-            SharerName = uc.Sharer?.Name ?? string.Empty,
-            SharerEmail = uc.Sharer?.Email ?? string.Empty,
-            ReceiverId = uc.ReceiverId,
-            ReceiverName = uc.Receiver?.Name ?? string.Empty,
-            ReceiverEmail = uc.Receiver?.Email ?? string.Empty,
-            CreatedAt = uc.CreatedAt
-        };
     }
 }

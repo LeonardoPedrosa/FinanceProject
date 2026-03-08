@@ -80,13 +80,6 @@ namespace FinanceApp.Api.Data.Repositories
             return false;
         }
 
-        public async Task<decimal> GetCategoryTotalExpensesAsync(Guid categoryId)
-        {
-            return await _context.Expenses
-                .Where(e => e.CategoryId == categoryId)
-                .SumAsync(e => e.Amount);
-        }
-
         public async Task<IEnumerable<Category>> GetConnectionSharedCategoriesAsync(IEnumerable<Guid> sharerIds, int year, int month)
         {
             var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
