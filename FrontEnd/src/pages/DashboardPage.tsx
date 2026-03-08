@@ -190,7 +190,10 @@ const DashboardPage: React.FC = () => {
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Month Spent</p>
             <p
               className={`text-2xl font-bold ${
-                budgetPercentage >= 100 ? 'text-red-600' : 'text-gray-900'
+                budgetPercentage > 100 ? 'text-red-600'
+                : budgetPercentage > 70 ? 'text-orange-500'
+                : budgetPercentage >= 50 ? 'text-green-500'
+                : 'text-gray-900'
               }`}
             >
               ${totalSpent.toFixed(2)}
