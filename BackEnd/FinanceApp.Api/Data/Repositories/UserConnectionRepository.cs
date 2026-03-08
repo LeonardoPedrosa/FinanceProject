@@ -39,5 +39,13 @@ namespace FinanceApp.Api.Data.Repositories
             if (connection == null) return null;
             return connection.SharerId == userId ? connection.ReceiverId : connection.SharerId;
         }
+
+        public async Task<UserConnection?> GetConnectionByUserIdAsync(Guid userId)
+        {
+            return await _dbSet
+                .Include(uc => uc.Sharer)
+                .Include(uc => uc.Receiver)
+                .FirstOrDefaultAsync(uc => uc.SharerId == userId || uc.ReceiverId == userId);
+        }
     }
 }

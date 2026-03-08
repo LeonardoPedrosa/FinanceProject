@@ -25,6 +25,25 @@ namespace FinanceApp.Api.Controllers
 
         private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        [HttpGet("my-connection")]
+        public async Task<ActionResult<MyConnectionResponseDto>> GetMyConnection()
+        {
+            var userId = GetUserId();
+            var connection = await _connectionRepository.GetConnectionByUserIdAsync(userId);
+            if (connection == null)
+                return NoContent();
+
+            var partner = connection.SharerId == userId ? connection.Receiver : connection.Sharer;
+            return Ok(new MyConnectionResponseDto
+            {
+                ConnectionId = connection.Id,
+                PartnerId = partner.Id,
+                PartnerName = partner.Name,
+                PartnerEmail = partner.Email,
+                CreatedAt = connection.CreatedAt
+            });
+        }
+
         [HttpGet("as-sharer")]
         public async Task<ActionResult<IEnumerable<UserConnectionResponseDto>>> GetAsSharer()
         {
@@ -42,7 +61,7 @@ namespace FinanceApp.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<UserConnectionResponseDto>> Create([FromBody] CreateUserConnectionDto dto)
+        public async Task<ActionResult<MyConnectionResponseDto>> Create([FromBody] CreateUserConnectionDto dto)
         {
             var userId = GetUserId();
 
@@ -53,9 +72,13 @@ namespace FinanceApp.Api.Controllers
             if (receiver.Id == userId)
                 return BadRequest(new { message = "You cannot connect with yourself." });
 
-            var existing = await _connectionRepository.GetAsync(userId, receiver.Id);
-            if (existing != null)
-                return Conflict(new { message = "Connection already exists." });
+            var myExisting = await _connectionRepository.GetConnectionByUserIdAsync(userId);
+            if (myExisting != null)
+                return Conflict(new { message = "You already have an active connection." });
+
+            var receiverExisting = await _connectionRepository.GetConnectionByUserIdAsync(receiver.Id);
+            if (receiverExisting != null)
+                return Conflict(new { message = "This user already has an active connection." });
 
             var connection = new UserConnection
             {
@@ -66,19 +89,12 @@ namespace FinanceApp.Api.Controllers
             await _connectionRepository.AddAsync(connection);
             await _connectionRepository.SaveChangesAsync();
 
-            // Re-fetch with navigation properties
-            var created = await _connectionRepository.GetAsync(userId, receiver.Id);
-            var sharer = await _userRepository.GetByIdAsync(userId);
-
-            return Ok(new UserConnectionResponseDto
+            return Ok(new MyConnectionResponseDto
             {
-                Id = connection.Id,
-                SharerId = userId,
-                SharerName = sharer?.Name ?? string.Empty,
-                SharerEmail = sharer?.Email ?? string.Empty,
-                ReceiverId = receiver.Id,
-                ReceiverName = receiver.Name,
-                ReceiverEmail = receiver.Email,
+                ConnectionId = connection.Id,
+                PartnerId = receiver.Id,
+                PartnerName = receiver.Name,
+                PartnerEmail = receiver.Email,
                 CreatedAt = connection.CreatedAt
             });
         }
@@ -92,7 +108,7 @@ namespace FinanceApp.Api.Controllers
             if (connection == null)
                 return NotFound();
 
-            if (connection.SharerId != userId)
+            if (connection.SharerId != userId && connection.ReceiverId != userId)
                 return Forbid();
 
             _connectionRepository.Delete(connection);

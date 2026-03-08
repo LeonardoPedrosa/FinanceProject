@@ -29,6 +29,14 @@ export interface UserConnection {
   createdAt: string
 }
 
+export interface MyConnection {
+  connectionId: string
+  partnerId: string
+  partnerName: string
+  partnerEmail: string
+  createdAt: string
+}
+
 export interface MonthConfig {
   id: string
   categoryId: string
