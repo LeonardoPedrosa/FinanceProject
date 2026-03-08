@@ -75,5 +75,19 @@ namespace FinanceApp.Api.Data.Repositories
                 .Where(e => e.CategoryId == categoryId)
                 .SumAsync(e => e.Amount);
         }
+
+        public async Task<IEnumerable<Category>> GetConnectionSharedCategoriesAsync(IEnumerable<Guid> sharerIds, int year, int month)
+        {
+            var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+
+            return await _dbSet
+                .Where(c => sharerIds.Contains(c.OwnerId) && !c.IsPrivate)
+                .Include(c => c.Owner)
+                .Include(c => c.Expenses.Where(e => e.CreatedAt >= startDate && e.CreatedAt < endDate))
+                .Include(c => c.MonthConfigs.Where(mc => mc.Year == year && mc.Month == month))
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+        }
     }
 }

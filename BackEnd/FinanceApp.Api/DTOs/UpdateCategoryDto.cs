@@ -16,5 +16,7 @@ namespace FinanceApp.Api.DTOs
         [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
             ErrorMessage = "Color must be a valid hex color (e.g., #FF5733)")]
         public string Color { get; set; } = string.Empty;
+
+        public bool IsPrivate { get; set; } = false;
     }
 }

@@ -42,7 +42,11 @@ const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConf
             <div className="min-w-0">
               <h3 className="font-semibold text-gray-900 truncate">{category.name}</h3>
               <span className="text-xs text-gray-400">
-                {category.isOwner ? 'My category' : 'Shared with me'}
+                {category.isOwner
+                  ? 'My category'
+                  : category.ownerName !== null
+                  ? `From ${category.ownerName}`
+                  : 'Shared with me'}
               </span>
             </div>
           </div>
@@ -105,13 +109,15 @@ const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConf
 
         {/* Actions */}
         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-50">
-          <button
-            onClick={onAddExpense}
-            className="flex-1 flex items-center justify-center gap-1.5 text-sm bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg py-1.5 transition-colors font-medium"
-          >
-            <Plus size={14} />
-            Add Expense
-          </button>
+          {(category.isOwner || category.ownerName === null) && (
+            <button
+              onClick={onAddExpense}
+              className="flex-1 flex items-center justify-center gap-1.5 text-sm bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg py-1.5 transition-colors font-medium"
+            >
+              <Plus size={14} />
+              Add Expense
+            </button>
+          )}
           <button
             onClick={onViewExpenses}
             className="flex items-center justify-center gap-1.5 text-sm bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg px-3 py-1.5 transition-colors"

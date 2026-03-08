@@ -29,5 +29,7 @@ namespace FinanceApp.Api.DTOs
 
         [Range(1, 12, ErrorMessage = "Month must be between 1 and 12")]
         public int? Month { get; set; }
+
+        public bool IsPrivate { get; set; } = false;
     }
 }

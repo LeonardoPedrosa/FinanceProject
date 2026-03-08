@@ -27,6 +27,7 @@ const EditCategoryModal: React.FC<Props> = ({ category, onClose, onSaved }) => {
   const [name, setName] = useState(category.name)
   const [selectedIcon, setSelectedIcon] = useState(category.icon)
   const [color, setColor] = useState(category.color)
+  const [isPrivate, setIsPrivate] = useState(category.isPrivate)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -40,6 +41,7 @@ const EditCategoryModal: React.FC<Props> = ({ category, onClose, onSaved }) => {
         name: name.trim(),
         icon: selectedIcon,
         color,
+        isPrivate,
       })
       onSaved()
     } catch {
@@ -158,6 +160,26 @@ const EditCategoryModal: React.FC<Props> = ({ category, onClose, onSaved }) => {
                 <p className="text-xs text-gray-400">Preview</p>
               </div>
             </div>
+          </div>
+          {/* Private toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700">Private Category</p>
+              <p className="text-xs text-gray-400">Hidden from people you share your data with</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPrivate((v) => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                isPrivate ? 'bg-indigo-600' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  isPrivate ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         </form>
 

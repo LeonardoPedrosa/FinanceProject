@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserMonthBudget> UserMonthBudgets { get; set; }
     public DbSet<FixedExpense> FixedExpenses { get; set; }
     public DbSet<FixedExpenseMonth> FixedExpenseMonths { get; set; }
+    public DbSet<UserConnection> UserConnections { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -88,6 +89,22 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<FixedExpenseMonth>()
             .HasIndex(m => new { m.FixedExpenseId, m.Year, m.Month })
+            .IsUnique();
+
+        modelBuilder.Entity<UserConnection>()
+            .HasOne(uc => uc.Sharer)
+            .WithMany()
+            .HasForeignKey(uc => uc.SharerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserConnection>()
+            .HasOne(uc => uc.Receiver)
+            .WithMany()
+            .HasForeignKey(uc => uc.ReceiverId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserConnection>()
+            .HasIndex(uc => new { uc.SharerId, uc.ReceiverId })
             .IsUnique();
     }
 }

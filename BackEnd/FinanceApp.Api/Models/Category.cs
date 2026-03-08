@@ -8,6 +8,7 @@ namespace FinanceApp.Api.Models
         public string Color { get; set; } = string.Empty;
         public Guid OwnerId { get; set; }
         public User Owner { get; set; } = null!;
+        public bool IsPrivate { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
         public ICollection<CategoryShare> Shares { get; set; } = new List<CategoryShare>();

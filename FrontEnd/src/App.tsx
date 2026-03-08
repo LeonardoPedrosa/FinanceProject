@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import SavingsGoalsPage from './pages/SavingsGoalsPage'
 import FixedExpensesPage from './pages/FixedExpensesPage'
+import ConnectionsPage from './pages/ConnectionsPage'
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -41,6 +42,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <FixedExpensesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/connections"
+            element={
+              <ProtectedRoute>
+                <ConnectionsPage />
               </ProtectedRoute>
             }
           />

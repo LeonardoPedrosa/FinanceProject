@@ -139,6 +139,7 @@ builder.Services.AddScoped<IUserMonthBudgetService, UserMonthBudgetService>();
 builder.Services.AddScoped<IFixedExpenseRepository, FixedExpenseRepository>();
 builder.Services.AddScoped<IFixedExpenseMonthRepository, FixedExpenseMonthRepository>();
 builder.Services.AddScoped<IFixedExpenseService, FixedExpenseService>();
+builder.Services.AddScoped<IUserConnectionRepository, UserConnectionRepository>();
 
 var app = builder.Build();
 

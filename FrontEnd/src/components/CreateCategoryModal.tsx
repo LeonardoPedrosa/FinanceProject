@@ -36,6 +36,7 @@ const CreateCategoryModal: React.FC<Props> = ({ year, month, onClose, onCreated 
   const [selectedIcon, setSelectedIcon] = useState(ICON_NAMES[0])
   const [color, setColor] = useState(PRESET_COLORS[4])
   const [maxValue, setMaxValue] = useState('')
+  const [isPrivate, setIsPrivate] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -51,6 +52,7 @@ const CreateCategoryModal: React.FC<Props> = ({ year, month, onClose, onCreated 
         maxValue: parseFloat(maxValue),
         year,
         month,
+        isPrivate,
       })
       onCreated()
     } catch (err) {
@@ -174,6 +176,27 @@ const CreateCategoryModal: React.FC<Props> = ({ year, month, onClose, onCreated 
                 <p className="text-xs text-gray-400">Preview</p>
               </div>
             </div>
+          </div>
+
+          {/* Private toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700">Private Category</p>
+              <p className="text-xs text-gray-400">Hidden from people you share your data with</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPrivate((v) => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                isPrivate ? 'bg-indigo-600' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  isPrivate ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
 
           {/* Max value */}

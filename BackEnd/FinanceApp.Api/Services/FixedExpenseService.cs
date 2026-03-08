@@ -9,13 +9,16 @@ namespace FinanceApp.Api.Services
     {
         private readonly IFixedExpenseRepository _fixedExpenseRepository;
         private readonly IFixedExpenseMonthRepository _fixedExpenseMonthRepository;
+        private readonly IUserConnectionRepository _connectionRepository;
 
         public FixedExpenseService(
             IFixedExpenseRepository fixedExpenseRepository,
-            IFixedExpenseMonthRepository fixedExpenseMonthRepository)
+            IFixedExpenseMonthRepository fixedExpenseMonthRepository,
+            IUserConnectionRepository connectionRepository)
         {
             _fixedExpenseRepository = fixedExpenseRepository;
             _fixedExpenseMonthRepository = fixedExpenseMonthRepository;
+            _connectionRepository = connectionRepository;
         }
 
         public async Task<List<FixedExpenseResponseDto>> GetAllAsync(Guid userId, int year, int month)
@@ -37,7 +40,17 @@ namespace FinanceApp.Api.Services
         public async Task<decimal> GetMonthTotalAsync(Guid userId, int year, int month)
         {
             var months = await _fixedExpenseMonthRepository.GetByUserMonthAsync(userId, year, month);
-            return months.Sum(m => m.Amount);
+            var total = months.Sum(m => m.Amount);
+
+            var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
+            var sharerIds = connections.Select(c => c.SharerId).ToList();
+            if (sharerIds.Any())
+            {
+                var sharerMonths = await _fixedExpenseMonthRepository.GetByUserIdsMonthAsync(sharerIds, year, month);
+                total += sharerMonths.Sum(m => m.Amount);
+            }
+
+            return total;
         }
 
         public async Task<FixedExpenseResponseDto> CreateAsync(Guid userId, CreateFixedExpenseDto dto)

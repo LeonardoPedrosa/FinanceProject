@@ -13,19 +13,22 @@ public class CategoryService : ICategoryService
     private readonly ICategoryShareRepository _shareRepository;
     private readonly IUserRepository _userRepository;
     private readonly ICategoryMonthConfigRepository _monthConfigRepository;
+    private readonly IUserConnectionRepository _connectionRepository;
 
     public CategoryService(
         ICategoryRepository categoryRepository,
         IExpenseRepository expenseRepository,
         ICategoryShareRepository shareRepository,
         IUserRepository userRepository,
-        ICategoryMonthConfigRepository monthConfigRepository)
+        ICategoryMonthConfigRepository monthConfigRepository,
+        IUserConnectionRepository connectionRepository)
     {
         _categoryRepository = categoryRepository;
         _expenseRepository = expenseRepository;
         _shareRepository = shareRepository;
         _userRepository = userRepository;
         _monthConfigRepository = monthConfigRepository;
+        _connectionRepository = connectionRepository;
     }
 
     public async Task<List<CategoryResponseDto>> GetUserCategoriesAsync(Guid userId, int year, int month)
@@ -33,14 +36,23 @@ public class CategoryService : ICategoryService
         var ownedCategories = await _categoryRepository.GetUserCategoriesAsync(userId, year, month);
         var sharedCategories = await _categoryRepository.GetSharedCategoriesAsync(userId, year, month);
 
-        var allCategories = ownedCategories.Concat(sharedCategories);
+        var seenIds = new HashSet<Guid>(ownedCategories.Select(c => c.Id).Concat(sharedCategories.Select(c => c.Id)));
 
-        return allCategories.Select(c =>
+        var connections = await _connectionRepository.GetByReceiverIdAsync(userId);
+        var sharerIds = connections.Select(c => c.SharerId).ToList();
+
+        var connectionCategories = sharerIds.Any()
+            ? await _categoryRepository.GetConnectionSharedCategoriesAsync(sharerIds, year, month)
+            : Enumerable.Empty<Models.Category>();
+
+        var result = new List<CategoryResponseDto>();
+
+        foreach (var c in ownedCategories.Concat(sharedCategories))
         {
             var config = c.MonthConfigs.FirstOrDefault();
             var currentValue = c.Expenses.Sum(e => e.Amount);
             var maxValue = config?.MaxValue ?? 0;
-            return new CategoryResponseDto
+            result.Add(new CategoryResponseDto
             {
                 Id = c.Id,
                 Name = c.Name,
@@ -50,9 +62,35 @@ public class CategoryService : ICategoryService
                 HasMonthConfig = config != null,
                 CurrentValue = currentValue,
                 IsOverLimit = config != null && currentValue > maxValue,
-                IsOwner = c.OwnerId == userId
-            };
-        }).ToList();
+                IsOwner = c.OwnerId == userId,
+                IsPrivate = c.IsPrivate,
+                OwnerName = null
+            });
+        }
+
+        foreach (var c in connectionCategories)
+        {
+            if (seenIds.Contains(c.Id)) continue;
+            var config = c.MonthConfigs.FirstOrDefault();
+            var currentValue = c.Expenses.Sum(e => e.Amount);
+            var maxValue = config?.MaxValue ?? 0;
+            result.Add(new CategoryResponseDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Icon = c.Icon,
+                Color = c.Color,
+                MaxValue = maxValue,
+                HasMonthConfig = config != null,
+                CurrentValue = currentValue,
+                IsOverLimit = config != null && currentValue > maxValue,
+                IsOwner = false,
+                IsPrivate = c.IsPrivate,
+                OwnerName = c.Owner?.Name
+            });
+        }
+
+        return result;
     }
 
     public async Task<CategoryResponseDto> CreateCategoryAsync(Guid userId, CreateCategoryDto dto)
@@ -62,7 +100,8 @@ public class CategoryService : ICategoryService
             Name = dto.Name,
             Icon = dto.Icon,
             Color = dto.Color,
-            OwnerId = userId
+            OwnerId = userId,
+            IsPrivate = dto.IsPrivate
         };
 
         await _categoryRepository.AddAsync(category);
@@ -91,7 +130,9 @@ public class CategoryService : ICategoryService
             HasMonthConfig = true,
             CurrentValue = 0,
             IsOverLimit = false,
-            IsOwner = true
+            IsOwner = true,
+            IsPrivate = category.IsPrivate,
+            OwnerName = null
         };
     }
 
@@ -380,6 +421,7 @@ public class CategoryService : ICategoryService
         category.Name = dto.Name;
         category.Icon = dto.Icon;
         category.Color = dto.Color;
+        category.IsPrivate = dto.IsPrivate;
 
         _categoryRepository.Update(category);
         await _categoryRepository.SaveChangesAsync();
@@ -401,7 +443,9 @@ public class CategoryService : ICategoryService
             HasMonthConfig = config != null,
             CurrentValue = currentValue,
             IsOverLimit = config != null && currentValue > maxValue,
-            IsOwner = true
+            IsOwner = true,
+            IsPrivate = category.IsPrivate,
+            OwnerName = null
         };
     }
 }

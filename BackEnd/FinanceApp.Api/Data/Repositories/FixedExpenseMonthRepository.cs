@@ -30,5 +30,13 @@ namespace FinanceApp.Api.Data.Repositories
             return await _dbSet
                 .FirstOrDefaultAsync(m => m.FixedExpenseId == fixedExpenseId && m.Year == year && m.Month == month);
         }
+
+        public async Task<IEnumerable<FixedExpenseMonth>> GetByUserIdsMonthAsync(IEnumerable<Guid> userIds, int year, int month)
+        {
+            return await _dbSet
+                .Where(m => userIds.Contains(m.FixedExpense.UserId) && m.Year == year && m.Month == month)
+                .Include(m => m.FixedExpense)
+                .ToListAsync();
+        }
     }
 }

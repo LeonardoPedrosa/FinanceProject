@@ -14,6 +14,19 @@ export interface Category {
   currentValue: number   // expenses sum for the viewed month
   isOverLimit: boolean
   isOwner: boolean
+  isPrivate: boolean
+  ownerName: string | null
+}
+
+export interface UserConnection {
+  id: string
+  sharerId: string
+  sharerName: string
+  sharerEmail: string
+  receiverId: string
+  receiverName: string
+  receiverEmail: string
+  createdAt: string
 }
 
 export interface MonthConfig {

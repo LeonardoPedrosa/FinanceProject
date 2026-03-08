@@ -16,5 +16,7 @@ namespace FinanceApp.Api.DTOs
         public decimal CurrentValue { get; set; }
         public bool IsOverLimit { get; set; }
         public bool IsOwner { get; set; }
+        public bool IsPrivate { get; set; }
+        public string? OwnerName { get; set; }
     }
 }
