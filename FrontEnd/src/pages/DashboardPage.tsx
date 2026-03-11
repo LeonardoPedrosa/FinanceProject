@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, TrendingUp, AlertTriangle, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
+import { Plus, TrendingUp, AlertTriangle, ChevronLeft, ChevronRight, Pencil, Eye, EyeOff } from 'lucide-react'
 import api from '../api/client'
 import { Category, UserMonthBudget } from '../types'
 import { useNavigate } from 'react-router-dom'
@@ -32,6 +32,14 @@ const DashboardPage: React.FC = () => {
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [fixedExpensesTotal, setFixedExpensesTotal] = useState(0)
   const navigate = useNavigate()
+
+  const [valuesVisible, setValuesVisible] = useState(() => localStorage.getItem('valuesVisible') !== 'false')
+  const toggleVisibility = () => setValuesVisible(v => {
+    const next = !v
+    localStorage.setItem('valuesVisible', String(next))
+    return next
+  })
+  const money = (val: number, decimals = 2) => valuesVisible ? `$${val.toFixed(decimals)}` : '••••'
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Category | null>(null)
@@ -135,6 +143,13 @@ const DashboardPage: React.FC = () => {
           >
             <ChevronRight size={20} />
           </button>
+          <button
+            onClick={toggleVisibility}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+            title={valuesVisible ? 'Hide values' : 'Show values'}
+          >
+            {valuesVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
         </div>
 
         {/* Summary cards */}
@@ -152,7 +167,7 @@ const DashboardPage: React.FC = () => {
             </div>
             {effectiveBudget > 0 ? (
               <>
-                <p className="text-2xl font-bold text-gray-900">${effectiveBudget.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-gray-900">{money(effectiveBudget)}</p>
                 {(() => {
                   const pct = Math.min((totalSpent / effectiveBudget) * 100, 100)
                   const over = totalSpent > effectiveBudget
@@ -167,8 +182,8 @@ const DashboardPage: React.FC = () => {
                       </div>
                       <p className={`text-xs mt-1 ${over ? 'text-red-500' : 'text-gray-400'}`}>
                         {over
-                          ? `$${diff.toFixed(2)} over budget`
-                          : `$${diff.toFixed(2)} remaining`}
+                          ? `${money(diff)} over budget`
+                          : `${money(diff)} remaining`}
                       </p>
                     </>
                   )
@@ -188,7 +203,7 @@ const DashboardPage: React.FC = () => {
             onClick={() => navigate('/fixed-expenses')}
           >
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Fixed Expenses</p>
-            <p className="text-2xl font-bold text-gray-900">${fixedExpensesTotal.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-gray-900">{money(fixedExpensesTotal)}</p>
             <p className="text-xs text-indigo-400 mt-0.5">View details →</p>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -201,7 +216,7 @@ const DashboardPage: React.FC = () => {
                 : 'text-gray-900'
               }`}
             >
-              ${totalSpent.toFixed(2)}
+              {money(totalSpent)}
             </p>
             {effectiveBudget > 0 && (
               <p className="text-xs text-gray-400 mt-0.5">{budgetPercentage.toFixed(0)}% of budget</p>
@@ -225,13 +240,13 @@ const DashboardPage: React.FC = () => {
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Public Budget</p>
-            <p className="text-2xl font-bold text-gray-900">${publicBudget.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-gray-900">{money(publicBudget)}</p>
             <p className="text-xs text-gray-400 mt-0.5">Public categories limit</p>
           </div>
           <div className={`rounded-xl p-4 shadow-sm border ${available < 0 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'}`}>
             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Available</p>
             <p className={`text-2xl font-bold ${available < 0 ? 'text-red-600' : 'text-gray-900'}`}>
-              ${available.toFixed(2)}
+              {money(available)}
             </p>
             <p className="text-xs text-gray-400 mt-0.5">Budget − Fixed − Shared</p>
           </div>
@@ -289,6 +304,7 @@ const DashboardPage: React.FC = () => {
               <CategoryCard
                 key={category.id}
                 category={category}
+                valuesVisible={valuesVisible}
                 onAddExpense={() => setExpenseTarget(category)}
                 onShare={() => setShareTarget(category)}
                 onConfigure={() => setConfigTarget(category)}

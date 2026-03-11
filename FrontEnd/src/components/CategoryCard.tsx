@@ -5,6 +5,7 @@ import Icon from '../utils/icons'
 
 interface Props {
   category: Category
+  valuesVisible: boolean
   onAddExpense: () => void
   onShare: () => void
   onConfigure: () => void
@@ -12,7 +13,8 @@ interface Props {
   onEdit: () => void
 }
 
-const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConfigure, onViewExpenses, onEdit }) => {
+const CategoryCard: React.FC<Props> = ({ category, valuesVisible, onAddExpense, onShare, onConfigure, onViewExpenses, onEdit }) => {
+  const money = (val: number, decimals = 2) => valuesVisible ? `$${val.toFixed(decimals)}` : '••••'
   const percentage =
     category.maxValue > 0
       ? Math.min((category.currentValue / category.maxValue) * 100, 100)
@@ -73,9 +75,9 @@ const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConf
                     category.isOverLimit ? 'text-red-600' : 'text-gray-900'
                   }`}
                 >
-                  ${category.currentValue.toFixed(2)}
+                  {money(category.currentValue)}
                 </span>
-                <span className="text-sm text-gray-400">/ ${category.maxValue.toFixed(2)}</span>
+                <span className="text-sm text-gray-400">/ {money(category.maxValue)}</span>
               </div>
 
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -103,7 +105,7 @@ const CategoryCard: React.FC<Props> = ({ category, onAddExpense, onShare, onConf
             <div className="flex flex-col items-center py-3 gap-2">
               <p className="text-sm text-gray-400">No limit set for this month</p>
               <p className="text-sm font-medium text-gray-700">
-                Spent: ${category.currentValue.toFixed(2)}
+                Spent: {money(category.currentValue)}
               </p>
               <button
                 onClick={onConfigure}
